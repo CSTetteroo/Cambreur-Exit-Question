@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -42,4 +43,22 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+        // Studenten ↔ Klassen (many-to-many)
+    public function classes()
+    {
+        return $this->belongsToMany(ClassModel::class, 'class_user');
+    }
+
+    // Docent → vragen gemaakt
+    public function questionsCreated()
+    {
+        return $this->hasMany(Question::class, 'created_by');
+    }
+
+    // Student → antwoorden
+    public function answers()
+    {
+        return $this->hasMany(Answer::class);
+    }
 }
