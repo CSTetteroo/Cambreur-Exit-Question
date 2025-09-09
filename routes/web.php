@@ -18,9 +18,22 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\ClassController;
+
+Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+    Route::get('/dashboard', [UserController::class, 'index'])->name('dashboard');
+
+    // User management
+    Route::post('/users/{role}', [UserController::class, 'store'])->name('users.store');
+    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+    // Class management
+    Route::post('/classes', [ClassController::class, 'store'])->name('classes.store');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

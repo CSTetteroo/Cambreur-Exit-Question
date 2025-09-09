@@ -47,7 +47,7 @@ class User extends Authenticatable
         // Studenten ↔ Klassen (many-to-many)
     public function classes()
     {
-        return $this->belongsToMany(ClassModel::class, 'class_user');
+        return $this->belongsToMany(ClassModel::class, 'class_user', 'user_id', 'class_id');
     }
 
     // Docent → vragen gemaakt
