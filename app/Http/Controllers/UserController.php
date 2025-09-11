@@ -13,7 +13,7 @@ class UserController extends Controller
     public function index()
     {
         $users = User::all();
-        return view('dashboard', [
+        return view('admin_dashboard', [
             'users' => $users,
             'classes' => ClassModel::all(),
         ]);
@@ -94,7 +94,7 @@ class UserController extends Controller
             $user->classes()->detach();
         }
 
-        return redirect()->route('dashboard')->with('status', 'Gebruiker bijgewerkt');
+        return redirect()->route('admin_dashboard')->with('status', 'Gebruiker bijgewerkt');
     }
 
     public function destroy($id)

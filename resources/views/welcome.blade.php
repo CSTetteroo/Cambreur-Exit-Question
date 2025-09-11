@@ -9,8 +9,8 @@
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col justify-center items-center px-4">
 
     <div class="max-w-md w-full text-center">
-        <h1 class="text-4xl font-bold mb-6">Welkom bij Class Quiz!</h1>
-        <p class="mb-8 text-gray-400">Test je kennis en daag je klasgenoten uit.</p>
+        <h1 class="text-4xl font-bold mb-6">Welkom bij de Exitvraag!</h1>
+        <p class="mb-8 text-gray-400">Test je kennis.</p>
 
         <div class="space-x-4">
             @auth
