@@ -1,0 +1,139 @@
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-200 leading-tight">Docent: Vragen beheren</h2>
+    </x-slot>
+
+    <div class="py-8 bg-gray-900 min-h-screen text-gray-100">
+        <div class="max-w-6xl mx-auto px-4 space-y-8">
+            @if (session('status'))
+                <div class="p-3 rounded bg-green-800/60 border border-green-700 text-green-100">{{ session('status') }}</div>
+            @endif
+            @if ($errors->any())
+                <div class="p-3 rounded bg-red-800/60 border border-red-700 text-red-100">
+                    <ul class="list-disc pl-5 space-y-1 text-sm">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <!-- Create question -->
+            <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 border border-gray-700">
+                <h3 class="text-2xl font-semibold mb-4">Nieuwe vraag</h3>
+                <form method="POST" action="{{ route('docent.questions.store') }}" x-data="{ type: 'open', choices: ['','', '', ''] }" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label class="block text-sm mb-1">Type</label>
+                        <select name="type" x-model="type" class="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600">
+                            <option value="open">Open</option>
+                            <option value="multiple_choice">Meerkeuze</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm mb-1">Inhoud</label>
+                        <textarea name="content" class="w-full min-h-24 px-3 py-2 rounded bg-gray-700 border border-gray-600" required>{{ old('content') }}</textarea>
+                    </div>
+                    <template x-if="type==='multiple_choice'">
+                        <div>
+                            <label class="block text-sm mb-2">Opties</label>
+                            <div class="space-y-2">
+                                <template x-for="(c,i) in choices" :key="i">
+                                    <input :name="`choices[`+i+`]`" x-model="choices[i]" type="text" class="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600" :placeholder="`Optie ${String.fromCharCode(65+i)}`">
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    <div>
+                        <label class="block text-sm mb-2">Activeer direct voor klassen (optioneel)</label>
+                        <div class="flex flex-wrap gap-2">
+                            @if(is_iterable($classes))
+                                @foreach($classes as $class)
+                                    @if(is_object($class))
+                                    <label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded">
+                                        <input type="checkbox" name="activate_class_ids[]" value="{{ $class->id }}" class="form-checkbox text-indigo-500 focus:ring-indigo-600 bg-gray-800 border-gray-600 rounded">
+                                        <span class="ml-2">{{ $class->name }}</span>
+                                    </label>
+                                    @endif
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+                    <button class="px-6 py-2 rounded bg-indigo-600 hover:bg-indigo-700">Opslaan</button>
+                </form>
+            </div>
+
+            <!-- Questions list and activate -->
+            <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 border border-gray-700">
+                <h3 class="text-2xl font-semibold mb-4">Mijn vragen</h3>
+                @if($questions->isEmpty())
+                    <p class="text-gray-400">Nog geen vragen.</p>
+                @else
+                    <div class="space-y-6">
+                        @foreach($questions as $q)
+                            <div class="p-4 rounded border border-gray-700 bg-gray-800/60">
+                                <div class="flex items-start justify-between gap-4">
+                                    <div>
+                                        <p class="font-medium">{{ Str::limit($q->content, 180) }}</p>
+                                        <div class="mt-1 text-xs text-gray-400 flex gap-3">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded bg-indigo-600/20 text-indigo-300 border border-indigo-600/30">{{ $q->type === 'multiple_choice' ? 'Meerkeuze' : 'Open' }}</span>
+                                            <span>Opties: {{ $q->choices_count }}</span>
+                                            <span>Antwoorden: {{ $q->answers_count }}</span>
+                                        </div>
+                                        @if($q->type==='multiple_choice' && $q->choices->isNotEmpty())
+                                            <ul class="mt-2 text-sm text-gray-300 list-disc pl-5">
+                                                @foreach($q->choices as $ch)
+                                                    <li><span class="text-gray-400">{{ $ch->label }}.</span> {{ $ch->text }}</li>
+                                                @endforeach
+                                            </ul>
+                                        @endif
+                                    </div>
+                                </div>
+                                <form method="POST" action="{{ route('docent.questions.activate', $q) }}" class="mt-4">
+                                    @csrf
+                                    <div class="text-sm mb-2">Activeer voor klassen:</div>
+                                    <div class="flex flex-wrap gap-2">
+                                        @if(is_iterable($classes))
+                                            @foreach($classes as $class)
+                                                @if(is_object($class))
+                                                <label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded">
+                                                    <input type="checkbox" name="class_ids[]" value="{{ $class->id }}" class="form-checkbox text-indigo-500 focus:ring-indigo-600 bg-gray-800 border-gray-600 rounded" @checked(optional($class->activeQuestion)->id === $q->id)>
+                                                    <span class="ml-2">{{ $class->name }}</span>
+                                                </label>
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    </div>
+                                    <button class="mt-3 px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-sm">Activeer</button>
+                                </form>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+
+            <!-- Classes and active question overview -->
+            <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 border border-gray-700">
+                <h3 class="text-2xl font-semibold mb-4">Klassen overzicht</h3>
+                <ul class="divide-y divide-gray-700/70">
+                    @if(is_iterable($classes))
+                        @foreach($classes as $class)
+                            @if(is_object($class))
+                            <li class="py-3 flex items-center justify-between">
+                                <div>
+                                    <div class="font-medium">{{ $class->name }}</div>
+                                    <div class="text-xs text-gray-400">Actieve vraag: {{ optional($class->activeQuestion)->id ? Str::limit($class->activeQuestion->content, 60) : '—' }}</div>
+                                </div>
+                                <form method="POST" action="{{ route('docent.classes.clear', $class) }}">
+                                    @csrf
+                                    <button class="px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 text-sm">Wis actief</button>
+                                </form>
+                            </li>
+                            @endif
+                        @endforeach
+                    @endif
+                </ul>
+            </div>
+        </div>
+    </div>
+</x-app-layout>

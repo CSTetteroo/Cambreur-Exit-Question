@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
 
-    public function index()
+    public function admin_index()
     {
         $users = User::all();
         return view('admin_dashboard', [
@@ -18,6 +18,7 @@ class UserController extends Controller
             'classes' => ClassModel::all(),
         ]);
     }
+
 
     public function store(Request $request)
     {

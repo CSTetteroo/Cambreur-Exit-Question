@@ -21,11 +21,18 @@ Route::get('/', function () {
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ClassController;
+// Controllers referenced with FQCN below
 use App\Models\Question;
 use Illuminate\Support\Facades\Auth;
 
+// ADMIN ONLY ROUTES
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
-    Route::get('/admin_dashboard', [UserController::class, 'index'])->name('admin_dashboard');
+    Route::get('/admin_dashboard', [UserController::class, 'admin_index'])->name('admin_dashboard');
+
+    // shite breeze profile things
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // User management
     Route::post('/users/{role}', [UserController::class, 'store'])->name('users.store');
@@ -37,6 +44,8 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::post('/classes', [ClassController::class, 'store'])->name('classes.store');
 });
 
+
+// Logged-in user routes
 Route::middleware('auth')->group(function () {
     // General user dashboard (students & docenten). Admins are redirected to admin dashboard.
     Route::get('/dashboard', function () {
@@ -44,17 +53,31 @@ Route::middleware('auth')->group(function () {
         if ($user && $user->role === 'admin') {
             return redirect()->route('admin_dashboard');
         }
-        // For now: all questions. Future: filter by class or availability window.
-        $questions = Question::latest()->take(50)->get();
-        return view('user_dashboard', [
-            'user' => $user,
-            'questions' => $questions,
-        ]);
+        // Students: show active questions for their classes. Docenten: show latest own questions.
+        if ($user->role === 'student') {
+            $questionIds = \App\Models\ClassModel::whereNotNull('active_question_id')
+                ->whereHas('students', function ($q) use ($user) { $q->where('users.id', $user->id); })
+                ->pluck('active_question_id')->unique()->toArray();
+            $questions = Question::with(['creator','choices'])->whereIn('id', $questionIds)->get();
+        } else {
+            // docent: own latest questions
+            $questions = Question::with('creator')
+                ->where('created_by', $user->id)
+                ->latest()->take(50)->get();
+        }
+        return view('user_dashboard', compact('user', 'questions'));
     })->name('dashboard');
 
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Docent-only question management
+    Route::middleware(['verified','docent'])->prefix('docent')->name('docent.')->group(function(){
+        Route::get('/questions', [\App\Http\Controllers\QuestionController::class, 'index'])->name('questions.index');
+        Route::post('/questions', [\App\Http\Controllers\QuestionController::class, 'store'])->name('questions.store');
+        Route::post('/questions/{question}/activate', [\App\Http\Controllers\QuestionController::class, 'activate'])->name('questions.activate');
+        Route::post('/classes/{class}/clear', [\App\Http\Controllers\QuestionController::class, 'clearActive'])->name('classes.clear');
+    });
+
+    // Answers (students)
+    Route::post('/answers', [\App\Http\Controllers\AnswerController::class, 'store'])->name('answers.store');
 });
 
 require __DIR__.'/auth.php';
