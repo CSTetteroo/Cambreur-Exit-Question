@@ -33,8 +33,12 @@ class AnswerController extends Controller
             abort(403, 'Deze vraag is niet actief voor jouw klas(sen).');
         }
 
-        // Enforce one answer per student per question by upsert-like logic
-        $answer = Answer::firstOrNew([
+        // Enforce one answer per student per question (no edits)
+        $exists = Answer::where('question_id', $question->id)->where('user_id', $user->id)->exists();
+        if ($exists) {
+            return back()->withErrors(['already_answered' => 'Je hebt deze vraag beantwoord!.'])->withInput();
+        }
+        $answer = new Answer([
             'question_id' => $question->id,
             'user_id' => $user->id,
         ]);
