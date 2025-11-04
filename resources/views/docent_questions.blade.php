@@ -129,11 +129,11 @@
                                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                             <div>
                                                 <div class="text-sm text-gray-400 mb-1">Vraag</div>
-                                                <div class="p-3 rounded border border-gray-700 bg-gray-800/60">{!! nl2br(e($q->content)) !!}</div>
+                                                <div class="p-3 rounded border border-gray-700 bg-gray-800/60 break-words overflow-auto max-h-60">{!! nl2br(e($q->content)) !!}</div>
                                                 @if($q->type==='multiple_choice' && $q->choices->isNotEmpty())
                                                     <div class="mt-4">
                                                         <div class="text-sm text-gray-400 mb-2">Opties</div>
-                                                        <ul class="text-sm text-gray-300 list-disc pl-5">
+                                                        <ul class="text-sm text-gray-300 list-disc pl-5 break-words">
                                                             @foreach($q->choices as $ch)
                                                                 <li>
                                                                     <span class="text-gray-400">{{ $ch->label }}.</span> {{ $ch->text }}
