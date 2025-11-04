@@ -8,9 +8,7 @@
             @if (session('status'))
                 <div class="p-3 rounded bg-green-800/60 border border-green-700 text-green-100">{{ session('status') }}</div>
             @endif
-            @if (session('warning'))
-                <div class="p-3 rounded bg-amber-800/60 border border-amber-700 text-amber-100">{{ session('warning') }}</div>
-            @endif
+            
             @if ($errors->any())
                 <div class="p-3 rounded bg-red-800/60 border border-red-700 text-red-100">
                     <ul class="list-disc pl-5 space-y-1 text-sm">
@@ -130,18 +128,14 @@
                                     <button class="mt-3 px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-sm">Opslaan</button>
                                 </form>
                                 @endif
-                                <form method="POST" action="{{ route('docent.questions.activate', $q) }}" class="mt-4" x-data @submit.prevent="
-                                    const boxes=[...$el.querySelectorAll('input[name=\'class_ids[]\']:checked')];
-                                    const warn = boxes.some(b=>b.closest('label')?.dataset.active==='1');
-                                    if(!warn || confirm('Er staat al een vraag actief in ten minste één geselecteerde klas. Doorgaan en overschrijven?')) $el.submit();
-                                ">
+                                <form method="POST" action="{{ route('docent.questions.activate', $q) }}" class="mt-4">
                                     @csrf
                                     <div class="text-sm mb-2">Activeer voor klassen:</div>
                                     <div class="flex flex-wrap gap-2">
                                         @if(is_iterable($classes))
                                             @foreach($classes as $class)
                                                 @if(is_object($class))
-                                                <label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded" data-active="{{ optional($class->activeQuestion)->id ? '1':'0' }}">
+                                                <label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded">
                                                     <input type="checkbox" name="class_ids[]" value="{{ $class->id }}" class="form-checkbox text-indigo-500 focus:ring-indigo-600 bg-gray-800 border-gray-600 rounded" @checked(optional($class->activeQuestion)->id === $q->id)>
                                                     <span class="ml-2">{{ $class->name }}</span>
                                                 </label>

@@ -53,6 +53,8 @@ Route::middleware('auth')->group(function () {
         if ($user && $user->role === 'admin') {
             return redirect()->route('admin_dashboard');
         }
+        // Ensure this exists for all roles to avoid compact() error in the view
+        $answeredIds = [];
         // Students: show active questions for their classes. Docenten: show latest own questions.
         if ($user->role === 'student') {
             $questionIds = \App\Models\ClassModel::whereNotNull('active_question_id')
