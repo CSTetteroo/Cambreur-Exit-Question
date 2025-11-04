@@ -35,6 +35,7 @@ class QuestionController extends Controller
             'type' => 'required|in:multiple_choice,open',
             'choices' => 'array',
             'choices.*' => 'nullable|string|max:255',
+            'correct_choice' => 'nullable|integer|min:0',
             'activate_class_ids' => 'array',
             'activate_class_ids.*' => 'integer|exists:classes,id',
         ]);
@@ -46,26 +47,107 @@ class QuestionController extends Controller
         $question->save();
 
         if ($question->type === 'multiple_choice' && !empty($validated['choices'])) {
-            // Filter out empty strings and assign labels A, B, C, ...
-            $texts = array_values(array_filter($validated['choices'], fn ($t) => $t !== null && trim($t) !== ''));
+            // Assign labels A, B, C... but evaluate correctness against original indices from the form
             $label = 'A';
-            foreach ($texts as $text) {
+            foreach ($validated['choices'] as $idx => $text) {
+                if ($text === null || trim($text) === '') {
+                    continue;
+                }
                 Choice::create([
                     'question_id' => $question->id,
                     'label' => $label,
                     'text' => $text,
+                    'is_correct' => isset($validated['correct_choice']) && intval($validated['correct_choice']) === intval($idx),
                 ]);
                 $label++;
             }
         }
 
-        // Optionally activate this question for selected classes
+        // Optionally activate this question for selected classes, with overwrite warning
+        $warning = null;
         if (!empty($validated['activate_class_ids'])) {
+            $overwritten = ClassModel::whereIn('id', $validated['activate_class_ids'])
+                ->whereNotNull('active_question_id')
+                ->pluck('name')->toArray();
             ClassModel::whereIn('id', $validated['activate_class_ids'])
                 ->update(['active_question_id' => $question->id]);
+            if (!empty($overwritten)) {
+                $warning = 'Let op: bestaande actieve vragen zijn overschreven voor: '.implode(', ', $overwritten);
+            }
         }
 
-        return redirect()->route('docent.questions.index')->with('status', 'Vraag aangemaakt');
+        return redirect()->route('docent.questions.index')
+            ->with('status', 'Vraag aangemaakt')
+            ->with('warning', $warning);
+    }
+
+    // Mark correct choice for a multiple choice question
+    public function setCorrect(Request $request, Question $question)
+    {
+        $this->authorizeQuestion($question);
+        if ($question->type !== 'multiple_choice') {
+            return back()->withErrors(['correct' => 'Alleen bij meerkeuzevragen.']);
+        }
+        $data = $request->validate([
+            'choice_id' => 'required|integer|exists:choices,id',
+        ]);
+        // Ensure the choice belongs to this question
+        $choice = Choice::where('id', $data['choice_id'])->where('question_id', $question->id)->firstOrFail();
+        // Reset all to false, then set one to true
+        Choice::where('question_id', $question->id)->update(['is_correct' => false]);
+        $choice->is_correct = true;
+        $choice->save();
+        return back()->with('status', 'Juiste antwoord opgeslagen');
+    }
+
+    // Results overview for a question (optionally filter by class)
+    public function results(Request $request, Question $question)
+    {
+        $this->authorizeQuestion($question);
+        $classId = $request->query('class_id');
+
+        // Base answers query for the question
+        $answersQuery = \App\Models\Answer::with(['user', 'choice'])
+            ->where('question_id', $question->id);
+
+        if ($classId) {
+            // Only answers from users in the selected class
+            $answersQuery->whereHas('user.classes', function ($q) use ($classId) {
+                $q->where('classes.id', $classId);
+            });
+        }
+
+        $answers = $answersQuery->latest()->get();
+        $classes = ClassModel::orderBy('name')->get();
+
+        // For multiple_choice: distribution per choice
+        $distribution = null;
+        if ($question->type === 'multiple_choice') {
+            $distribution = $answers->groupBy('choice_id')->map(function ($group) {
+                return $group->count();
+            });
+            // Include labels
+            $labels = $question->choices()->pluck('label', 'id');
+            $distribution = $distribution->mapWithKeys(function ($count, $choiceId) use ($labels) {
+                $label = $labels[$choiceId] ?? '?';
+                return [$label => $count];
+            })->sortKeys();
+        }
+
+        return view('docent_results', [
+            'question' => $question->load('choices'),
+            'answers' => $answers,
+            'classes' => $classes,
+            'selectedClassId' => $classId,
+            'distribution' => $distribution,
+        ]);
+    }
+
+    public function destroy(Question $question)
+    {
+        $this->authorizeQuestion($question);
+        $question->delete();
+        return back()->with('status', 'Vraag verwijderd');
     }
 
     // Activate existing question for selected classes
@@ -76,9 +158,13 @@ class QuestionController extends Controller
             'class_ids' => 'required|array|min:1',
             'class_ids.*' => 'integer|exists:classes,id',
         ]);
+        $overwritten = ClassModel::whereIn('id', $data['class_ids'])
+            ->whereNotNull('active_question_id')
+            ->pluck('name')->toArray();
         ClassModel::whereIn('id', $data['class_ids'])
             ->update(['active_question_id' => $question->id]);
-        return back()->with('status', 'Vraag geactiveerd voor geselecteerde klassen');
+        $warning = !empty($overwritten) ? ('Let op: bestaande actieve vragen zijn overschreven voor: '.implode(', ', $overwritten)) : null;
+        return back()->with('status', 'Vraag geactiveerd voor geselecteerde klassen')->with('warning', $warning);
     }
 
     // Clear active question for a class
