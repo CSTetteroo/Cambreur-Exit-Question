@@ -7,7 +7,7 @@
         <div class="max-w-6xl mx-auto px-4 space-y-8">
             <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 border border-gray-700">
                 <h3 class="text-2xl font-semibold mb-2">Vraag</h3>
-                <p class="text-gray-100 whitespace-pre-line">{{ $question->content }}</p>
+                <p class="text-gray-100 whitespace-pre-line break-words">{{ $question->content }}</p>
                 <div class="mt-2 text-xs text-gray-400">
                     Type: <span class="inline-flex items-center px-2 py-0.5 rounded bg-indigo-600/20 text-indigo-300 border border-indigo-600/30">{{ $question->type === 'multiple_choice' ? 'Meerkeuze' : 'Open' }}</span>
                 </div>
@@ -20,13 +20,12 @@
                         <label class="block text-sm mb-1">Filter op klas</label>
                         <select name="class_id" class="px-3 py-2 rounded bg-gray-700 border border-gray-600">
                             <option value="">Alle klassen</option>
-                            @if(is_iterable($classes))
-                                @foreach($classes as $class)
-                                    @if(is_object($class))
-                                    <option value="{{ $class->id }}" @if($selectedClassId==$class->id) selected @endif>{{ $class->name }}</option>
-                                    @endif
-                                @endforeach
-                            @endif
+                            @php $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()); @endphp
+                            @foreach($classesList as $class)
+                                @if(is_object($class))
+                                <option value="{{ $class->id }}" @if($selectedClassId==$class->id) selected @endif>{{ $class->name }}</option>
+                                @endif
+                            @endforeach
                         </select>
                     </div>
                     <button class="px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700">Toepassen</button>
@@ -84,23 +83,23 @@
                                     <td class="px-3 py-2">
                                         <div>
                                             <button type="button" class="text-left w-full group" @click="showQ=!showQ">
-                                                <span class="block line-clamp-2 group-hover:underline">{{ Str::limit($question->content, 60) }}</span>
+                                                <span class="block line-clamp-2 break-words group-hover:underline">{{ Str::limit($question->content, 60) }}</span>
                                                 <span class="text-xs text-indigo-300" x-show="!showQ">Meer...</span>
                                             </button>
-                                            <div class="mt-1 text-gray-200 whitespace-pre-line" x-show="showQ">{{ $question->content }}</div>
+                                            <div class="mt-1 text-gray-200 whitespace-pre-line break-words" x-show="showQ">{{ $question->content }}</div>
                                         </div>
                                     </td>
                                     <td class="px-3 py-2">
                                         @if($question->type==='multiple_choice')
-                                            {{ optional(optional($ans)->choice)->label }}@if(optional(optional($ans)->choice)->label). @endif {{ optional(optional($ans)->choice)->text }}
+                                            <span class="break-words">{{ optional(optional($ans)->choice)->label }}@if(optional(optional($ans)->choice)->label). @endif {{ optional(optional($ans)->choice)->text }}</span>
                                         @else
                                             @if($ans)
                                             <div>
                                                 <button type="button" class="text-left w-full group" @click="showA=!showA">
-                                                    <span class="block line-clamp-2 group-hover:underline">{{ Str::limit($ans->answer_text, 60) }}</span>
+                                                    <span class="block line-clamp-2 break-words group-hover:underline">{{ Str::limit($ans->answer_text, 60) }}</span>
                                                     <span class="text-xs text-indigo-300" x-show="!showA">Meer...</span>
                                                 </button>
-                                                <div class="mt-1 text-gray-200 whitespace-pre-line" x-show="showA">{{ $ans->answer_text }}</div>
+                                                <div class="mt-1 text-gray-200 whitespace-pre-line break-words" x-show="showA">{{ $ans->answer_text }}</div>
                                             </div>
                                             @else
                                                 <span class="text-gray-500">—</span>

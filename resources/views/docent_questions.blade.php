@@ -155,7 +155,7 @@
                                                         @click.stop class="">
                                                         @csrf
                                                         <div class="text-sm mb-2">Activeer voor klassen:</div>
-                                                        @php($classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()))
+                                                        @php $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()); @endphp
                                                         <div class="flex flex-wrap gap-2">
                                                             @foreach ($classesList as $class)
                                                                 @if (is_object($class))
@@ -217,10 +217,10 @@
                                         <input :name="`choices[` + i + `]`" x-model="choices[i]" type="text"
                                             class="flex-1 px-3 py-2 rounded bg-gray-700 border border-gray-600"
                                             :placeholder="`Optie ${String.fromCharCode(65+i)}`" :required="i < 2">
-                                        <label class="inline-flex items-center text-xs text-gray-300">
-                                            <input type="radio" name="correct_choice" :value="i"
-                                                x-model.number="correct"
-                                                class="form-radio text-emerald-500 bg-gray-800 border-gray-600">
+                                                                        <label class="inline-flex items-center text-xs text-gray-300">
+                                                                            <input type="radio" name="correct_choice" :value="i"
+                                                                                x-model.number="correct" :required="type==='multiple_choice'"
+                                                                                class="form-radio text-emerald-500 bg-gray-800 border-gray-600">
                                             <span class="ml-1">Juist</span>
                                         </label>
                                     </div>
@@ -236,7 +236,7 @@
                     </template>
                     <div>
                         <label class="block text-sm mb-2">Activeer direct voor klassen (optioneel)</label>
-                        @php($classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()))
+                        @php $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()); @endphp
                         <div class="flex flex-wrap gap-2">
                             @foreach ($classesList as $class)
                                 @if (is_object($class))
@@ -259,7 +259,7 @@
             <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 border border-gray-700">
                 <h3 class="text-2xl font-semibold mb-4">Klassen overzicht</h3>
                 <ul class="divide-y divide-gray-700/70">
-                    @php($classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()))
+                    @php $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()); @endphp
                     @foreach ($classesList as $class)
                         @if (is_object($class))
                             <li class="py-3 flex items-center justify-between">

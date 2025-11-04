@@ -55,22 +55,27 @@ Route::middleware('auth')->group(function () {
         }
         // Ensure this exists for all roles to avoid compact() error in the view
         $answeredIds = [];
-        // Students: show active questions for their classes. Docenten: show latest own questions.
+        $questions = collect();
+        $myClasses = collect();
+        // Students: show active question per class. Docenten: show latest own questions.
         if ($user->role === 'student') {
-            $questionIds = \App\Models\ClassModel::whereNotNull('active_question_id')
+            $myClasses = \App\Models\ClassModel::with(['activeQuestion.creator','activeQuestion.choices'])
                 ->whereHas('students', function ($q) use ($user) { $q->where('users.id', $user->id); })
-                ->pluck('active_question_id')->unique()->toArray();
-            $questions = Question::with(['creator','choices'])->whereIn('id', $questionIds)->get();
-            $answeredIds = \App\Models\Answer::where('user_id', $user->id)
-                ->whereIn('question_id', $questionIds)
-                ->pluck('question_id')->toArray();
+                ->orderBy('name')
+                ->get();
+            $questionIds = $myClasses->pluck('active_question_id')->filter()->unique()->values();
+            if ($questionIds->isNotEmpty()) {
+                $answeredIds = \App\Models\Answer::where('user_id', $user->id)
+                    ->whereIn('question_id', $questionIds)
+                    ->pluck('question_id')->toArray();
+            }
         } else {
             // docent: own latest questions
             $questions = Question::with('creator')
                 ->where('created_by', $user->id)
                 ->latest()->take(50)->get();
         }
-        return view('user_dashboard', compact('user', 'questions', 'answeredIds'));
+        return view('user_dashboard', compact('user', 'questions', 'answeredIds', 'myClasses'));
     })->name('dashboard');
 
     // Docent-only question management

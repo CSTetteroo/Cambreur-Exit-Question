@@ -18,36 +18,51 @@
 						@if($user->role==='docent')
 							<a href="{{ route('docent.questions.index') }}" class="text-xs px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-700">Vragen beheren</a>
 						@endif
-						<span class="text-xs text-gray-400">Totaal: {{ $questions->count() }}</span>
+						@if($user->role==='student')
+							<span class="text-xs text-gray-400">Klassen: {{ ($myClasses ?? collect())->count() }}</span>
+						@else
+							<span class="text-xs text-gray-400">Totaal: {{ $questions->count() }}</span>
+						@endif
 					</div>
 				</div>
-				@if($questions->isEmpty())
-					<p class="text-gray-400 text-sm">Er zijn momenteel geen vragen beschikbaar.</p>
-				@else
-					<ul class="divide-y divide-gray-700/70">
-						@foreach($questions as $question)
+
+				@if($user->role==='student')
+					@php $classesList = ($myClasses ?? collect()); @endphp
+					@if($classesList->isEmpty())
+						<p class="text-gray-400 text-sm">Er zijn momenteel geen vragen voor jouw klassen.</p>
+					@else
+						<ul class="divide-y divide-gray-700/70">
+						@foreach($classesList as $class)
 							<li class="py-4 flex flex-col gap-3 hover:bg-gray-700/40 px-2 rounded transition">
+								<div class="flex items-center justify-between">
+									<div class="font-semibold">Klas: {{ $class->name }}</div>
+									@if($class->activeQuestion)
+										<span class="text-xs text-gray-400">Vraag #{{ $class->activeQuestion->id }}</span>
+									@endif
+								</div>
+								@if(!$class->activeQuestion)
+									<div class="text-gray-400 text-sm">Geen actieve vraag.</div>
+								@else
+								@php $question = $class->activeQuestion; $already = isset($answeredIds) && in_array($question->id, $answeredIds ?? []); @endphp
 								<div>
-									<p class="text-gray-100 whitespace-pre-line">{{ Str::limit($question->content, 280) }}</p>
+									<p class="text-gray-100 whitespace-pre-line break-words">{{ Str::limit($question->content, 280) }}</p>
 									<div class="flex items-center gap-3 text-xs text-gray-400 mt-1">
 										<span class="inline-flex items-center px-2 py-0.5 rounded bg-indigo-600/20 text-indigo-300 border border-indigo-600/30">{{ $question->type === 'multiple_choice' ? 'Meerkeuze' : 'Open' }}</span>
 										<span>Docent: {{ optional($question->creator)->name ?? 'Onbekend' }}</span>
 										<span>Geplaatst: {{ $question->created_at->diffForHumans() }}</span>
 									</div>
 								</div>
-								@if($user->role==='student')
-									@php $already = isset($answeredIds) && in_array($question->id, $answeredIds ?? []); @endphp
-									@if($already)
-										<div class="px-3 py-2 rounded border border-emerald-700 bg-emerald-800/40 text-emerald-100 text-sm">Je hebt al geantwoord op deze vraag.</div>
-									@else
+								@if($already)
+									<div class="px-3 py-2 rounded border border-emerald-700 bg-emerald-800/40 text-emerald-100 text-sm">Je hebt al geantwoord op deze vraag.</div>
+								@else
 									<form method="POST" action="{{ route('answers.store') }}" class="space-y-2">
 										@csrf
 										<input type="hidden" name="question_id" value="{{ $question->id }}">
 										@if($question->type==='multiple_choice')
 											<div class="flex flex-wrap gap-3">
 												@foreach($question->choices as $choice)
-													<label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded">
-														<input type="radio" name="choice_id" value="{{ $choice->id }}" class="form-radio text-indigo-500 focus:ring-indigo-600 bg-gray-800 border-gray-600 rounded">
+													<label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded break-words">
+														<input type="radio" name="choice_id" value="{{ $choice->id }}" class="form-radio text-indigo-500 focus:ring-indigo-600 bg-gray-800 border-gray-600 rounded" required>
 														<span class="ml-2"><span class="text-gray-400">{{ $choice->label }}.</span> {{ $choice->text }}</span>
 													</label>
 												@endforeach
@@ -57,11 +72,31 @@
 										@endif
 										<button class="px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-sm">Verstuur antwoord</button>
 									</form>
-									@endif
+								@endif
 								@endif
 							</li>
 						@endforeach
-					</ul>
+						</ul>
+					@endif
+				@else
+					@if($questions->isEmpty())
+						<p class="text-gray-400 text-sm">Er zijn momenteel geen vragen beschikbaar.</p>
+					@else
+						<ul class="divide-y divide-gray-700/70">
+							@foreach($questions as $question)
+								<li class="py-4 flex flex-col gap-3 hover:bg-gray-700/40 px-2 rounded transition">
+									<div>
+										<p class="text-gray-100 whitespace-pre-line break-words">{{ Str::limit($question->content, 280) }}</p>
+										<div class="flex items-center gap-3 text-xs text-gray-400 mt-1">
+											<span class="inline-flex items-center px-2 py-0.5 rounded bg-indigo-600/20 text-indigo-300 border border-indigo-600/30">{{ $question->type === 'multiple_choice' ? 'Meerkeuze' : 'Open' }}</span>
+											<span>Docent: {{ optional($question->creator)->name ?? 'Onbekend' }}</span>
+											<span>Geplaatst: {{ $question->created_at->diffForHumans() }}</span>
+										</div>
+									</div>
+								</li>
+							@endforeach
+						</ul>
+					@endif
 				@endif
 			</section>
 

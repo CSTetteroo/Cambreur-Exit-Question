@@ -50,12 +50,13 @@ class QuestionController extends Controller
             if (count($nonEmpty) > 4) {
                 return back()->withErrors(['choices' => 'Maximaal 4 opties zijn toegestaan.'])->withInput();
             }
-            // If a correct_choice is provided, ensure it points to a non-empty option
-            if (isset($validated['correct_choice'])) {
-                $idx = (int)$validated['correct_choice'];
-                if (!array_key_exists($idx, $raw) || ($raw[$idx] === null || trim($raw[$idx]) === '')) {
-                    return back()->withErrors(['correct_choice' => 'Geselecteerde juiste optie is leeg of ongeldig.'])->withInput();
-                }
+            // Require a correct option to be selected and valid
+            if (!isset($validated['correct_choice'])) {
+                return back()->withErrors(['correct_choice' => 'Kies het juiste antwoord voor een meerkeuzevraag.'])->withInput();
+            }
+            $idx = (int)$validated['correct_choice'];
+            if (!array_key_exists($idx, $raw) || ($raw[$idx] === null || trim($raw[$idx]) === '')) {
+                return back()->withErrors(['correct_choice' => 'Geselecteerde juiste optie is leeg of ongeldig.'])->withInput();
             }
         }
 
@@ -222,11 +223,22 @@ class QuestionController extends Controller
             'class_ids' => 'required|array|min:1',
             'class_ids.*' => 'integer|exists:classes,id',
         ]);
-        $overwritten = ClassModel::whereIn('id', $data['class_ids'])
+        $selectedIds = collect($data['class_ids'])->unique()->values();
+
+        // Overwrite: classes being selected that already had any active question
+        $overwritten = ClassModel::whereIn('id', $selectedIds)
             ->whereNotNull('active_question_id')
             ->pluck('name')->toArray();
-        ClassModel::whereIn('id', $data['class_ids'])
-            ->update(['active_question_id' => $question->id]);
+        // Activate on selected
+        ClassModel::whereIn('id', $selectedIds)->update(['active_question_id' => $question->id]);
+
+        // Clear for classes that currently have THIS question active but are not selected anymore
+        $currentlyWithThis = ClassModel::where('active_question_id', $question->id)->pluck('id');
+        $toClear = $currentlyWithThis->diff($selectedIds);
+        if ($toClear->isNotEmpty()) {
+            ClassModel::whereIn('id', $toClear)->update(['active_question_id' => null]);
+        }
+
         $warning = !empty($overwritten) ? ('Let op: bestaande actieve vragen zijn overschreven voor: '.implode(', ', $overwritten)) : null;
         return back()->with('status', 'Vraag geactiveerd voor geselecteerde klassen')->with('warning', $warning);
     }
