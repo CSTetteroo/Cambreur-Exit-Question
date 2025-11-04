@@ -108,7 +108,7 @@
                                         </button>
                                     </td>
                                     <td class="px-4 py-3 align-top">
-                                        <div class="font-medium">{{ Str::limit($q->content, 120) }}</div>
+                                        <div class="font-medium max-w-[60ch] truncate" title="{{ e($q->content) }}">{{ Str::limit(str_replace(["\r\n","\n"], ' ', $q->content), 35) }}</div>
                                     </td>
                                     <td class="px-4 py-3 align-top">
                                         <span class="inline-flex items-center px-2 py-0.5 rounded bg-indigo-600/20 text-indigo-300 border border-indigo-600/30 text-xs">{{ $q->type === 'multiple_choice' ? 'Meerkeuze' : 'Open' }}</span>
