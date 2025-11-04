@@ -66,6 +66,9 @@
                                 <th class="px-3 py-2">Antwoord</th>
                                 <th class="px-3 py-2">Status</th>
                                 <th class="px-3 py-2">Datum</th>
+                                @if($question->type==='open')
+                                <th class="px-3 py-2">Beoordeling</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-700/70">
@@ -76,18 +79,56 @@
                                     $symbol = $status==='correct' ? '✓' : ($status==='wrong' ? '✗' : '–');
                                     $color = $status==='correct' ? 'text-emerald-400' : ($status==='wrong' ? 'text-red-400' : 'text-gray-400');
                                 @endphp
-                                <tr class="hover:bg-gray-700/40">
+                                <tr class="hover:bg-gray-700/40" x-data="{showQ:false, showA:false}">
                                     <td class="px-3 py-2">{{ optional($row['user'])->name ?? 'Onbekend' }}</td>
-                                    <td class="px-3 py-2">{{ Str::limit($question->content, 60) }}</td>
+                                    <td class="px-3 py-2">
+                                        <div>
+                                            <button type="button" class="text-left w-full group" @click="showQ=!showQ">
+                                                <span class="block line-clamp-2 group-hover:underline">{{ Str::limit($question->content, 60) }}</span>
+                                                <span class="text-xs text-indigo-300" x-show="!showQ">Meer...</span>
+                                            </button>
+                                            <div class="mt-1 text-gray-200 whitespace-pre-line" x-show="showQ">{{ $question->content }}</div>
+                                        </div>
+                                    </td>
                                     <td class="px-3 py-2">
                                         @if($question->type==='multiple_choice')
                                             {{ optional(optional($ans)->choice)->label }}@if(optional(optional($ans)->choice)->label). @endif {{ optional(optional($ans)->choice)->text }}
                                         @else
-                                            <span class="whitespace-pre-line">{{ optional($ans)->answer_text }}</span>
+                                            @if($ans)
+                                            <div>
+                                                <button type="button" class="text-left w-full group" @click="showA=!showA">
+                                                    <span class="block line-clamp-2 group-hover:underline">{{ Str::limit($ans->answer_text, 60) }}</span>
+                                                    <span class="text-xs text-indigo-300" x-show="!showA">Meer...</span>
+                                                </button>
+                                                <div class="mt-1 text-gray-200 whitespace-pre-line" x-show="showA">{{ $ans->answer_text }}</div>
+                                            </div>
+                                            @else
+                                                <span class="text-gray-500">—</span>
+                                            @endif
                                         @endif
                                     </td>
                                     <td class="px-3 py-2 font-semibold {{ $color }}">{{ $symbol }}</td>
                                     <td class="px-3 py-2 text-xs text-gray-400">{{ optional(optional($ans)->created_at)->diffForHumans() }}</td>
+                                    @if($question->type==='open')
+                                    <td class="px-3 py-2">
+                                        @if($ans)
+                                        <div class="flex items-center gap-2">
+                                            <form method="POST" action="{{ route('docent.questions.grade', $question) }}">
+                                                @csrf
+                                                <input type="hidden" name="answer_id" value="{{ $ans->id }}">
+                                                <input type="hidden" name="is_correct" value="1">
+                                                <button class="px-2 py-1 text-xs rounded {{ $ans->is_correct===1 ? 'bg-emerald-700 text-white' : 'bg-gray-700 hover:bg-emerald-700' }}">✓ Juist</button>
+                                            </form>
+                                            <form method="POST" action="{{ route('docent.questions.grade', $question) }}">
+                                                @csrf
+                                                <input type="hidden" name="answer_id" value="{{ $ans->id }}">
+                                                <input type="hidden" name="is_correct" value="0">
+                                                <button class="px-2 py-1 text-xs rounded {{ $ans->is_correct===0 ? 'bg-red-700 text-white' : 'bg-gray-700 hover:bg-red-700' }}">✗ Onjuist</button>
+                                            </form>
+                                        </div>
+                                        @endif
+                                    </td>
+                                    @endif
                                 </tr>
                             @empty
                                 <tr><td colspan="5" class="px-3 py-3 text-gray-500">Geen gegevens beschikbaar.</td></tr>
