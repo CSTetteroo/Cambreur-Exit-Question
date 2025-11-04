@@ -53,32 +53,48 @@
             @endif
 
             <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 border border-gray-700">
-                <h3 class="text-xl font-semibold mb-3">Antwoorden ({{ $answers->count() }})</h3>
-                @if($answers->isEmpty())
-                    <p class="text-gray-400 text-sm">Nog geen antwoorden.</p>
-                @else
-                    <ul class="divide-y divide-gray-700/70">
-                        @foreach($answers as $ans)
-                            <li class="py-3">
-                                <div class="text-sm text-gray-300">
-                                    <span class="text-gray-400">Student:</span> {{ optional($ans->user)->name ?? 'Onbekend' }}
-                                </div>
-                                @if($question->type==='multiple_choice')
-                                    <div class="text-sm">
-                                        Geantwoord: <span class="font-medium">{{ optional($ans->choice)->label }}. {{ optional($ans->choice)->text }}</span>
-                                        @php $isCorrect = optional($ans->choice)->is_correct ?? false; @endphp
-                                        @if($isCorrect)
-                                            <span class="ml-2 text-emerald-400 text-xs">(juist)</span>
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-xl font-semibold">Antwoorden</h3>
+                    <span class="text-xs text-gray-400">@if($selectedClassId) Klas-weergave (alle studenten) @else Alle studenten @endif</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left text-sm text-gray-300">
+                        <thead class="bg-gray-700/60 text-gray-200">
+                            <tr>
+                                <th class="px-3 py-2">Student</th>
+                                <th class="px-3 py-2">Vraag</th>
+                                <th class="px-3 py-2">Antwoord</th>
+                                <th class="px-3 py-2">Status</th>
+                                <th class="px-3 py-2">Datum</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-700/70">
+                            @forelse($rows as $row)
+                                @php
+                                    $ans = $row['answer'] ?? null;
+                                    $status = $row['status'] ?? 'neutral';
+                                    $symbol = $status==='correct' ? '✓' : ($status==='wrong' ? '✗' : '–');
+                                    $color = $status==='correct' ? 'text-emerald-400' : ($status==='wrong' ? 'text-red-400' : 'text-gray-400');
+                                @endphp
+                                <tr class="hover:bg-gray-700/40">
+                                    <td class="px-3 py-2">{{ optional($row['user'])->name ?? 'Onbekend' }}</td>
+                                    <td class="px-3 py-2">{{ Str::limit($question->content, 60) }}</td>
+                                    <td class="px-3 py-2">
+                                        @if($question->type==='multiple_choice')
+                                            {{ optional(optional($ans)->choice)->label }}@if(optional(optional($ans)->choice)->label). @endif {{ optional(optional($ans)->choice)->text }}
+                                        @else
+                                            <span class="whitespace-pre-line">{{ optional($ans)->answer_text }}</span>
                                         @endif
-                                    </div>
-                                @else
-                                    <div class="text-sm text-gray-200 whitespace-pre-line">{{ $ans->answer_text }}</div>
-                                @endif
-                                <div class="text-xs text-gray-500">{{ $ans->created_at->diffForHumans() }}</div>
-                            </li>
-                        @endforeach
-                    </ul>
-                @endif
+                                    </td>
+                                    <td class="px-3 py-2 font-semibold {{ $color }}">{{ $symbol }}</td>
+                                    <td class="px-3 py-2 text-xs text-gray-400">{{ optional(optional($ans)->created_at)->diffForHumans() }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="5" class="px-3 py-3 text-gray-500">Geen gegevens beschikbaar.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

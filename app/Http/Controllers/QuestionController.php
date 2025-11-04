@@ -139,6 +139,25 @@ class QuestionController extends Controller
         $answers = $answersQuery->latest()->get();
         $classes = ClassModel::orderBy('name')->get();
 
+        // Build table rows per user: if class filter set, include all students in that class; else include all students
+        $students = $classId
+            ? optional(ClassModel::with('students')->find($classId))->students ?? collect()
+            : \App\Models\User::where('role', 'student')->orderBy('name')->get();
+
+        $answersByUser = $answers->keyBy('user_id');
+        $rows = $students->map(function ($stu) use ($answersByUser, $question) {
+            $ans = $answersByUser->get($stu->id);
+            $status = 'neutral';
+            if ($question->type === 'multiple_choice' && $ans) {
+                $status = (optional($ans->choice)->is_correct ?? false) ? 'correct' : 'wrong';
+            }
+            return [
+                'user' => $stu,
+                'answer' => $ans,
+                'status' => $status,
+            ];
+        });
+
         // For multiple_choice: distribution per choice
         $distribution = null;
         if ($question->type === 'multiple_choice') {
@@ -159,6 +178,7 @@ class QuestionController extends Controller
             'classes' => $classes,
             'selectedClassId' => $classId,
             'distribution' => $distribution,
+            'rows' => $rows,
         ]);
     }
 
