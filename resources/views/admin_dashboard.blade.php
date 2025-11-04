@@ -93,38 +93,49 @@
             </form>
         </div>
 
-        <!-- Manage Accounts Section -->
+        <!-- Manage Accounts Section (grouped by role) -->
         <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 mb-8 border border-gray-700">
-            <h2 class="text-2xl font-semibold mb-4">Accounts beheren</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-left text-gray-300 text-sm">
-                    <thead class="bg-gray-700/60">
-                        <tr class="text-gray-200">
-                            <th class="px-4 py-2 font-medium">Naam</th>
-                            <th class="px-4 py-2 font-medium">E-mail</th>
-                            <th class="px-4 py-2 font-medium">Rol</th>
-                            <th class="px-4 py-2 font-medium">Acties</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-700/70">
-                        @foreach($users as $user)
-                            <tr class="hover:bg-gray-700/40 transition">
-                                <td class="px-4 py-2">{{ $user->name }}</td>
-                                <td class="px-4 py-2">{{ $user->email }}</td>
-                                <td class="px-4 py-2">{{ ucfirst($user->role) }}</td>
-                                <td class="px-4 py-2 space-x-3">
-                                    <a href="{{ route('users.edit', $user->id) }}" class="text-indigo-400 hover:text-indigo-300">Bewerken</a>
-                                    <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-400 hover:text-red-300" onclick="return confirm('Weet je zeker dat je deze gebruiker wilt verwijderen?')">Verwijderen</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+            <h2 class="text-2xl font-semibold mb-6">Accounts beheren</h2>
+            @php
+                $admins = $users->where('role','admin');
+                $docenten = $users->where('role','docent');
+                $studenten = $users->where('role','student');
+            @endphp
+
+            @foreach ([['label'=>'Admins','data'=>$admins], ['label'=>'Docenten','data'=>$docenten], ['label'=>'Studenten','data'=>$studenten]] as $group)
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold mb-3">{{ $group['label'] }} <span class="text-sm text-gray-400">({{ $group['data']->count() }})</span></h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-left text-gray-300 text-sm">
+                            <thead class="bg-gray-700/60">
+                                <tr class="text-gray-200">
+                                    <th class="px-4 py-2 font-medium">Naam</th>
+                                    <th class="px-4 py-2 font-medium">E-mail</th>
+                                    <th class="px-4 py-2 font-medium">Acties</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-700/70">
+                                @forelse($group['data'] as $user)
+                                    <tr class="hover:bg-gray-700/40 transition">
+                                        <td class="px-4 py-2">{{ $user->name }}</td>
+                                        <td class="px-4 py-2">{{ $user->email }}</td>
+                                        <td class="px-4 py-2 space-x-3">
+                                            <a href="{{ route('users.edit', $user->id) }}" class="text-indigo-400 hover:text-indigo-300">Bewerken</a>
+                                            <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-400 hover:text-red-300" onclick="return confirm('Weet je zeker dat je deze gebruiker wilt verwijderen?')">Verwijderen</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="3" class="px-4 py-3 text-gray-500">Geen {{ strtolower($group['label']) }} gevonden.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endforeach
         </div>
     </div>
     </div>
