@@ -24,7 +24,12 @@
             <!-- Create question -->
             <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 border border-gray-700">
                 <h3 class="text-2xl font-semibold mb-4">Nieuwe vraag</h3>
-                <form method="POST" action="{{ route('docent.questions.store') }}" x-data="{ type: 'open', choices: ['','', '', ''], correct: null }" class="space-y-4">
+                <form method="POST" action="{{ route('docent.questions.store') }}" x-data="{
+                        type: 'open',
+                        choices: ['', ''],
+                        correct: null,
+                        addChoice(){ if(this.choices.length < 4) this.choices.push(''); }
+                    }" class="space-y-4">
                     @csrf
                     <div>
                         <label class="block text-sm mb-1">Type</label>
@@ -43,13 +48,17 @@
                             <div class="space-y-2">
                                 <template x-for="(c,i) in choices" :key="i">
                                     <div class="flex items-center gap-2">
-                                        <input :name="`choices[`+i+`]`" x-model="choices[i]" type="text" class="flex-1 px-3 py-2 rounded bg-gray-700 border border-gray-600" :placeholder="`Optie ${String.fromCharCode(65+i)}`">
+                                        <input :name="`choices[`+i+`]`" x-model="choices[i]" type="text" class="flex-1 px-3 py-2 rounded bg-gray-700 border border-gray-600" :placeholder="`Optie ${String.fromCharCode(65+i)}`" :required="i < 2">
                                         <label class="inline-flex items-center text-xs text-gray-300">
                                             <input type="radio" name="correct_choice" :value="i" x-model.number="correct" class="form-radio text-emerald-500 bg-gray-800 border-gray-600">
                                             <span class="ml-1">Juist</span>
                                         </label>
                                     </div>
                                 </template>
+                            </div>
+                            <div class="mt-3 flex items-center gap-3">
+                                <button type="button" @click="addChoice()" class="px-3 py-1.5 rounded bg-gray-700 hover:bg-gray-600 text-sm disabled:opacity-50" :disabled="choices.length>=4">Optie toevoegen</button>
+                                <span class="text-xs text-gray-400">Minimaal 2 opties, maximaal 4</span>
                             </div>
                         </div>
                     </template>

@@ -40,6 +40,25 @@ class QuestionController extends Controller
             'activate_class_ids.*' => 'integer|exists:classes,id',
         ]);
 
+        // Additional validation rules for multiple choice: at least 2 non-empty, max 4
+        if (($validated['type'] ?? null) === 'multiple_choice') {
+            $raw = $validated['choices'] ?? [];
+            $nonEmpty = array_values(array_filter($raw, fn($t) => $t !== null && trim($t) !== ''));
+            if (count($nonEmpty) < 2) {
+                return back()->withErrors(['choices' => 'Minimaal 2 opties zijn verplicht voor een meerkeuzevraag.'])->withInput();
+            }
+            if (count($nonEmpty) > 4) {
+                return back()->withErrors(['choices' => 'Maximaal 4 opties zijn toegestaan.'])->withInput();
+            }
+            // If a correct_choice is provided, ensure it points to a non-empty option
+            if (isset($validated['correct_choice'])) {
+                $idx = (int)$validated['correct_choice'];
+                if (!array_key_exists($idx, $raw) || ($raw[$idx] === null || trim($raw[$idx]) === '')) {
+                    return back()->withErrors(['correct_choice' => 'Geselecteerde juiste optie is leeg of ongeldig.'])->withInput();
+                }
+            }
+        }
+
         $question = new Question();
         $question->content = $validated['content'];
         $question->type = $validated['type'];
