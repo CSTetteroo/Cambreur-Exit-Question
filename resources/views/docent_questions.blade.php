@@ -3,6 +3,8 @@
         <h2 class="font-semibold text-xl text-gray-200 leading-tight">Docent: Vragen beheren</h2>
     </x-slot>
 
+    <style>[x-cloak]{display:none!important}</style>
+
     <div class="py-8 bg-gray-900 min-h-screen text-gray-100">
         <div class="max-w-6xl mx-auto px-4 space-y-8">
             @if (session('status'))
@@ -62,17 +64,16 @@
                     </template>
                     <div>
                         <label class="block text-sm mb-2">Activeer direct voor klassen (optioneel)</label>
+                        @php($classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()))
                         <div class="flex flex-wrap gap-2">
-                            @if(is_iterable($classes))
-                                @foreach($classes as $class)
-                                    @if(is_object($class))
-                                    <label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded">
-                                        <input type="checkbox" name="activate_class_ids[]" value="{{ $class->id }}" class="form-checkbox text-indigo-500 focus:ring-indigo-600 bg-gray-800 border-gray-600 rounded">
-                                        <span class="ml-2">{{ $class->name }}</span>
-                                    </label>
-                                    @endif
-                                @endforeach
-                            @endif
+                            @foreach($classesList as $class)
+                                @if(is_object($class))
+                                <label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded">
+                                    <input type="checkbox" name="activate_class_ids[]" value="{{ $class->id }}" class="form-checkbox text-indigo-500 focus:ring-indigo-600 bg-gray-800 border-gray-600 rounded">
+                                    <span class="ml-2">{{ $class->name }}</span>
+                                </label>
+                                @endif
+                            @endforeach
                         </div>
                     </div>
                     <button class="px-6 py-2 rounded bg-indigo-600 hover:bg-indigo-700">Opslaan</button>
@@ -85,68 +86,103 @@
                 @if($questions->isEmpty())
                     <p class="text-gray-400">Nog geen vragen.</p>
                 @else
-                    <div class="space-y-6">
-                        @foreach($questions as $q)
-                            <div class="p-4 rounded border border-gray-700 bg-gray-800/60">
-                                <div class="flex items-start justify-between gap-4">
-                                    <div>
-                                        <p class="font-medium">{{ Str::limit($q->content, 180) }}</p>
-                                        <div class="mt-1 text-xs text-gray-400 flex gap-3">
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded bg-indigo-600/20 text-indigo-300 border border-indigo-600/30">{{ $q->type === 'multiple_choice' ? 'Meerkeuze' : 'Open' }}</span>
-                                            <span>Opties: {{ $q->choices_count }}</span>
-                                            <span>Antwoorden: {{ $q->answers_count }}</span>
-                                        </div>
-                                        @if($q->type==='multiple_choice' && $q->choices->isNotEmpty())
-                                            <ul class="mt-2 text-sm text-gray-300 list-disc pl-5">
-                                                @foreach($q->choices as $ch)
-                                                    <li><span class="text-gray-400">{{ $ch->label }}.</span> {{ $ch->text }} @if($ch->is_correct)<span class="ml-2 text-emerald-400 text-xs">(juist)</span>@endif</li>
-                                                @endforeach
-                                            </ul>
-                                        @endif
-                                    </div>
-                                    <div class="text-right space-y-2">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-700">
+                            <thead class="bg-gray-800/60">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Details</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Vraag</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Type</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Opties</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Antwoorden</th>
+                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Acties</th>
+                                </tr>
+                            </thead>
+                            @foreach($questions as $q)
+                            <tbody x-data="{ open: false }" class="divide-y divide-gray-700">
+                                <tr class="bg-gray-800/40">
+                                    <td class="px-4 py-3 align-top">
+                                        <button @click.stop="open = !open" type="button" class="inline-flex items-center px-2 py-1 text-xs rounded bg-gray-700 hover:bg-gray-600">
+                                            <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                            <svg x-show="open" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
+                                        </button>
+                                    </td>
+                                    <td class="px-4 py-3 align-top">
+                                        <div class="font-medium">{{ Str::limit($q->content, 120) }}</div>
+                                    </td>
+                                    <td class="px-4 py-3 align-top">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded bg-indigo-600/20 text-indigo-300 border border-indigo-600/30 text-xs">{{ $q->type === 'multiple_choice' ? 'Meerkeuze' : 'Open' }}</span>
+                                    </td>
+                                    <td class="px-4 py-3 align-top text-sm text-gray-300">{{ $q->choices_count }}</td>
+                                    <td class="px-4 py-3 align-top text-sm text-gray-300">{{ $q->answers_count }}</td>
+                                    <td class="px-4 py-3 align-top text-right space-x-2 whitespace-nowrap">
                                         <a href="{{ route('docent.questions.results', $q) }}" class="text-xs px-3 py-1.5 rounded bg-sky-600 hover:bg-sky-700 inline-block">Bekijk antwoorden</a>
-                                        <form method="POST" action="{{ route('docent.questions.destroy', $q) }}" onsubmit="return confirm('Weet je zeker dat je deze vraag wil verwijderen?');">
+                                        <form method="POST" action="{{ route('docent.questions.destroy', $q) }}" class="inline" onsubmit="return confirm('Weet je zeker dat je deze vraag wil verwijderen?');">
                                             @csrf
                                             @method('DELETE')
                                             <button class="text-xs px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 inline-block">Verwijder</button>
                                         </form>
-                                    </div>
-                                </div>
-                                @if($q->type==='multiple_choice' && $q->choices->isNotEmpty())
-                                <form method="POST" action="{{ route('docent.questions.setCorrect', $q) }}" class="mt-3">
-                                    @csrf
-                                    <div class="text-sm mb-2">Juiste antwoord instellen:</div>
-                                    <div class="flex flex-wrap gap-3">
-                                        @foreach($q->choices as $ch)
-                                            <label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded">
-                                                <input type="radio" name="choice_id" value="{{ $ch->id }}" class="form-radio text-emerald-500 bg-gray-800 border-gray-600" @checked($ch->is_correct)>
-                                                <span class="ml-2"><span class="text-gray-400">{{ $ch->label }}.</span> {{ $ch->text }}</span>
-                                            </label>
-                                        @endforeach
-                                    </div>
-                                    <button class="mt-3 px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-sm">Opslaan</button>
-                                </form>
-                                @endif
-                                <form method="POST" action="{{ route('docent.questions.activate', $q) }}" class="mt-4">
-                                    @csrf
-                                    <div class="text-sm mb-2">Activeer voor klassen:</div>
-                                    <div class="flex flex-wrap gap-2">
-                                        @if(is_iterable($classes))
-                                            @foreach($classes as $class)
-                                                @if(is_object($class))
-                                                <label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded">
-                                                    <input type="checkbox" name="class_ids[]" value="{{ $class->id }}" class="form-checkbox text-indigo-500 focus:ring-indigo-600 bg-gray-800 border-gray-600 rounded" @checked(optional($class->activeQuestion)->id === $q->id)>
-                                                    <span class="ml-2">{{ $class->name }}</span>
-                                                </label>
+                                    </td>
+                                </tr>
+                                <tr x-show="open" x-cloak class="bg-gray-900/40">
+                                    <td colspan="6" class="px-6 pb-6 pt-2">
+                                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            <div>
+                                                <div class="text-sm text-gray-400 mb-1">Vraag</div>
+                                                <div class="p-3 rounded border border-gray-700 bg-gray-800/60">{!! nl2br(e($q->content)) !!}</div>
+                                                @if($q->type==='multiple_choice' && $q->choices->isNotEmpty())
+                                                    <div class="mt-4">
+                                                        <div class="text-sm text-gray-400 mb-2">Opties</div>
+                                                        <ul class="text-sm text-gray-300 list-disc pl-5">
+                                                            @foreach($q->choices as $ch)
+                                                                <li>
+                                                                    <span class="text-gray-400">{{ $ch->label }}.</span> {{ $ch->text }}
+                                                                    @if($ch->is_correct)
+                                                                        <span class="ml-2 text-emerald-400 text-xs">(juist)</span>
+                                                                    @endif
+                                                                </li>
+                                                            @endforeach
+                                                        </ul>
+                                                    </div>
+                                                    <form method="POST" action="{{ route('docent.questions.setCorrect', $q) }}" class="mt-3">
+                                                        @csrf
+                                                        <div class="text-sm mb-2">Juiste antwoord instellen:</div>
+                                                        <div class="flex flex-wrap gap-3">
+                                                            @foreach($q->choices as $ch)
+                                                                <label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded">
+                                                                    <input type="radio" name="choice_id" value="{{ $ch->id }}" class="form-radio text-emerald-500 bg-gray-800 border-gray-600" @checked($ch->is_correct)>
+                                                                    <span class="ml-2"><span class="text-gray-400">{{ $ch->label }}.</span> {{ $ch->text }}</span>
+                                                                </label>
+                                                            @endforeach
+                                                        </div>
+                                                        <button class="mt-3 px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-sm">Opslaan</button>
+                                                    </form>
                                                 @endif
-                                            @endforeach
-                                        @endif
-                                    </div>
-                                    <button class="mt-3 px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-sm">Activeer</button>
-                                </form>
-                            </div>
-                        @endforeach
+                                            </div>
+                                            <div>
+                                                <form method="POST" action="{{ route('docent.questions.activate', $q) }}" @click.stop class="">
+                                                    @csrf
+                                                    <div class="text-sm mb-2">Activeer voor klassen:</div>
+                                                    @php($classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()))
+                                                    <div class="flex flex-wrap gap-2">
+                                                        @foreach($classesList as $class)
+                                                            @if(is_object($class))
+                                                            <label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded">
+                                                                <input type="checkbox" name="class_ids[]" value="{{ $class->id }}" class="form-checkbox text-indigo-500 focus:ring-indigo-600 bg-gray-800 border-gray-600 rounded" @checked(optional($class->activeQuestion)->id === $q->id)>
+                                                                <span class="ml-2">{{ $class->name }}</span>
+                                                            </label>
+                                                            @endif
+                                                        @endforeach
+                                                    </div>
+                                                    <button class="mt-3 px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-sm">Activeer</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            @endforeach
+                        </table>
                     </div>
                 @endif
             </div>
@@ -155,8 +191,8 @@
             <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 border border-gray-700">
                 <h3 class="text-2xl font-semibold mb-4">Klassen overzicht</h3>
                 <ul class="divide-y divide-gray-700/70">
-                    @if(is_iterable($classes))
-                        @foreach($classes as $class)
+                    @php($classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()))
+                        @foreach($classesList as $class)
                             @if(is_object($class))
                             <li class="py-3 flex items-center justify-between">
                                 <div>
@@ -170,7 +206,6 @@
                             </li>
                             @endif
                         @endforeach
-                    @endif
                 </ul>
             </div>
         </div>

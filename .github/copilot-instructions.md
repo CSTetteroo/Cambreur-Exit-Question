@@ -1,44 +1,47 @@
 # Copilot instructions for this repo
 
 ## Big picture
-- This is a Laravel 10 app with Breeze auth, Vite, Tailwind, and Alpine. The domain is a small Q&A system for classes with three roles: admin, docent (teacher), student.
-- Core entities and relations:
-  - `User` has `role` in ['admin','docent','student'] and many-to-many `classes()` via `class_user` pivot.
-  - `ClassModel` (named to avoid PHP reserved word) maps to `classes` and may have an `active_question_id`.
-  - `Question` belongs to `creator` (a `User`), has many `choices` and `answers`.
-  - `Answer` belongs to `question`, `user`, optional `choice` for MC; `Choice` belongs to `question`.
-  - See models under `app/Models/*.php` and migrations in `database/migrations/*` for schema.
+- Laravel 10 app with Breeze auth, Vite, Tailwind, and Alpine. Domain: small class Q&A with roles: admin, docent (teacher), student.
+- Data model (see `app/Models/*.php`):
+  - `User` has string `role` and many-to-many `classes()` via `class_user` pivot.
+  - `ClassModel` (not `Class`) maps to `classes`, optional `active_question_id` → `activeQuestion()`.
+  - `Question` (`$fillable`: content, type, created_by) belongs to `creator` (`User`); has many `choices` and `answers`.
+  - `Answer` (`$fillable`: question_id, user_id, choice_id, answer_text, is_correct) belongs to `question`, `user`, optional `choice`.
+  - `Choice` (`$fillable`: question_id, label, text, is_correct) belongs to `question`.
 
 ## Routing and middleware
-- Web routes are in `routes/web.php`. Auth scaffolding routes are in `routes/auth.php` (Breeze).
-- Admin-only UI is grouped under `Route::middleware(['auth','verified','admin'])` with alias `admin` wired in `app/Http/Kernel.php` to `App\Http\Middleware\IsAdmin`.
+- Web: `routes/web.php`. Breeze auth routes: `routes/auth.php`.
+- Middleware aliases in `app/Http/Kernel.php`: `admin` → `App\Http\Middleware\IsAdmin`, `docent` → `IsDocent`, plus `auth`/`verified`.
 - Dashboards:
-  - Admin: `GET /admin_dashboard` -> `UserController@admin_index` renders `resources/views/admin_dashboard.blade.php`.
-  - Logged-in users: `GET /dashboard` renders `resources/views/user_dashboard.blade.php` and redirects admins to the admin dashboard.
+  - Admin: `GET /admin_dashboard` → `UserController@admin_index` → `resources/views/admin_dashboard.blade.php`.
+  - Users: `GET /dashboard` → `resources/views/user_dashboard.blade.php`. Admins are redirected to admin dashboard. Students see active class questions; docenten see latest own questions. Avoid N+1 by eager loading `creator`, `choices` as used.
+- Docent question management (prefix `docent.`, see `QuestionController`):
+  - `docent.questions.index|store|activate|results|setCorrect|grade|destroy`, and `docent.classes.clear`.
+- Student answers: `answers.store` (`AnswerController@store`).
 
 ## Controllers and patterns
-- `UserController` handles basic CRUD and role/class assignment. Validation differs by role (students must have at least one class). It uses `classes()->sync([...])` for many-to-many updates.
-- `ClassController@store` creates new classes with `class_name` input.
-- Use named routes when adding links in blades: `users.store`, `users.edit`, `users.update`, `users.destroy`, `classes.store`.
-
-## Views and frontend
-- Blade components/layout come from Breeze (`<x-app-layout>`). Styling is Tailwind 3 with a dark theme.
-- Assets are built with Vite; entry at `resources/js/app.js` and `resources/css/app.css`. Tailwind config in `tailwind.config.js`.
-
-## Developer workflows
-- Install and serve:
-  - PHP deps: `composer install`; copy `.env` and set DB; run `php artisan key:generate`.
-  - Frontend: `npm install`; dev server `npm run dev`; prod build `npm run build`.
-  - DB: `php artisan migrate --seed` (seeds `admin@example.com` / password `admin123`).
-  - Run: `php artisan serve` (or via your local web stack). Log in, then visit `/admin_dashboard`.
-- Tests: `php artisan test` (PHPUnit 10; config in `phpunit.xml`).
+- `UserController`: CRUD + class assignment; students must have ≥1 class; uses `$user->classes()->sync([...])`.
+- `ClassController@store`: creates classes from `class_name` input.
+- FKs and constraints enforced in migrations; rely on Eloquent relationships where possible.
 
 ## Conventions and gotchas
-- Use `ClassModel` for Eloquent model; table is `classes`. Pivot is `class_user` with unique composite (`class_id`, `user_id`).
-- Roles are simple strings; gate/authorization currently enforced via middleware and route groups, not policies.
-- Keep validation in controllers consistent with current forms (see `admin_dashboard.blade.php` and `edit_user.blade.php`).
-- Prefer Eloquent relationships already defined (e.g., `Question::latest()->take(50)` on dashboards) and avoid N+1s by eager loading when extending features.
+- Always use `ClassModel` for the `classes` table (PHP reserved word). Pivot table is `class_user` with unique composite (`class_id`,`user_id`).
+- Migrations:
+  - `2025_11_04_121000_unique_answer_per_user_per_question` enforces unique (`question_id`,`user_id`) in `answers`.
+  - `2025_11_04_120000_restore_user_fk_on_class_user` restores `class_user.user_id → users.id` with cascade on delete.
+- Roles are plain strings; authorization is via route middleware, not policies.
+- Blade uses Breeze components (`<x-app-layout>`). Tailwind config in `tailwind.config.js`. Vite entry: `resources/js/app.js`, `resources/css/app.css`.
 
-## Typical additions
-- When adding question CRUD for docenten: create a controller under `app/Http/Controllers`, add resource routes in `routes/web.php` within `auth` (and role check), and use `Question::$fillable` fields (`content`, `type`, `created_by`).
-- If you add policies or gates later, register in `app/Providers/AuthServiceProvider.php` and refactor route middleware accordingly.
+## Developer workflows
+- Install: `composer install`; copy `.env`, set DB; `php artisan key:generate`.
+- Frontend: `npm install`; dev `npm run dev`; build `npm run build`.
+- DB: `php artisan migrate --seed` (seeds `admin@example.com` / `admin123`).
+- Run: `php artisan serve` (or local stack like Laragon); log in → `/admin_dashboard`.
+- Tests: `php artisan test` (PHPUnit 10).
+
+## File map examples
+- Models: `app/Models/{User,ClassModel,Question,Answer,Choice}.php`.
+- Routes: `routes/web.php` (see docent routes), `routes/auth.php`.
+- Views: `resources/views/{admin_dashboard,user_dashboard,docent_questions}.blade.php`.
+
+If anything above is unclear or missing (e.g., grading rules, result views), tell me what you’d like to automate next and I’ll refine these rules.
