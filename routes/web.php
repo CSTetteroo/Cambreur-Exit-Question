@@ -59,13 +59,16 @@ Route::middleware('auth')->group(function () {
                 ->whereHas('students', function ($q) use ($user) { $q->where('users.id', $user->id); })
                 ->pluck('active_question_id')->unique()->toArray();
             $questions = Question::with(['creator','choices'])->whereIn('id', $questionIds)->get();
+            $answeredIds = \App\Models\Answer::where('user_id', $user->id)
+                ->whereIn('question_id', $questionIds)
+                ->pluck('question_id')->toArray();
         } else {
             // docent: own latest questions
             $questions = Question::with('creator')
                 ->where('created_by', $user->id)
                 ->latest()->take(50)->get();
         }
-        return view('user_dashboard', compact('user', 'questions'));
+        return view('user_dashboard', compact('user', 'questions', 'answeredIds'));
     })->name('dashboard');
 
     // Docent-only question management
@@ -74,6 +77,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/questions', [\App\Http\Controllers\QuestionController::class, 'store'])->name('questions.store');
         Route::post('/questions/{question}/activate', [\App\Http\Controllers\QuestionController::class, 'activate'])->name('questions.activate');
         Route::post('/classes/{class}/clear', [\App\Http\Controllers\QuestionController::class, 'clearActive'])->name('classes.clear');
+        Route::get('/questions/{question}/results', [\App\Http\Controllers\QuestionController::class, 'results'])->name('questions.results');
+        Route::post('/questions/{question}/correct', [\App\Http\Controllers\QuestionController::class, 'setCorrect'])->name('questions.setCorrect');
+        Route::delete('/questions/{question}', [\App\Http\Controllers\QuestionController::class, 'destroy'])->name('questions.destroy');
     });
 
     // Answers (students)

@@ -36,6 +36,10 @@
 									</div>
 								</div>
 								@if($user->role==='student')
+									@php $already = isset($answeredIds) && in_array($question->id, $answeredIds ?? []); @endphp
+									@if($already)
+										<div class="px-3 py-2 rounded border border-emerald-700 bg-emerald-800/40 text-emerald-100 text-sm">Je hebt al geantwoord op deze vraag.</div>
+									@else
 									<form method="POST" action="{{ route('answers.store') }}" class="space-y-2">
 										@csrf
 										<input type="hidden" name="question_id" value="{{ $question->id }}">
@@ -53,6 +57,7 @@
 										@endif
 										<button class="px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-sm">Verstuur antwoord</button>
 									</form>
+									@endif
 								@endif
 							</li>
 						@endforeach

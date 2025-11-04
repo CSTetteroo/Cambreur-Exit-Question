@@ -8,6 +8,9 @@
             @if (session('status'))
                 <div class="p-3 rounded bg-green-800/60 border border-green-700 text-green-100">{{ session('status') }}</div>
             @endif
+            @if (session('warning'))
+                <div class="p-3 rounded bg-amber-800/60 border border-amber-700 text-amber-100">{{ session('warning') }}</div>
+            @endif
             @if ($errors->any())
                 <div class="p-3 rounded bg-red-800/60 border border-red-700 text-red-100">
                     <ul class="list-disc pl-5 space-y-1 text-sm">
@@ -21,7 +24,7 @@
             <!-- Create question -->
             <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 border border-gray-700">
                 <h3 class="text-2xl font-semibold mb-4">Nieuwe vraag</h3>
-                <form method="POST" action="{{ route('docent.questions.store') }}" x-data="{ type: 'open', choices: ['','', '', ''] }" class="space-y-4">
+                <form method="POST" action="{{ route('docent.questions.store') }}" x-data="{ type: 'open', choices: ['','', '', ''], correct: null }" class="space-y-4">
                     @csrf
                     <div>
                         <label class="block text-sm mb-1">Type</label>
@@ -39,7 +42,13 @@
                             <label class="block text-sm mb-2">Opties</label>
                             <div class="space-y-2">
                                 <template x-for="(c,i) in choices" :key="i">
-                                    <input :name="`choices[`+i+`]`" x-model="choices[i]" type="text" class="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600" :placeholder="`Optie ${String.fromCharCode(65+i)}`">
+                                    <div class="flex items-center gap-2">
+                                        <input :name="`choices[`+i+`]`" x-model="choices[i]" type="text" class="flex-1 px-3 py-2 rounded bg-gray-700 border border-gray-600" :placeholder="`Optie ${String.fromCharCode(65+i)}`">
+                                        <label class="inline-flex items-center text-xs text-gray-300">
+                                            <input type="radio" name="correct_choice" :value="i" x-model.number="correct" class="form-radio text-emerald-500 bg-gray-800 border-gray-600">
+                                            <span class="ml-1">Juist</span>
+                                        </label>
+                                    </div>
                                 </template>
                             </div>
                         </div>
@@ -83,20 +92,47 @@
                                         @if($q->type==='multiple_choice' && $q->choices->isNotEmpty())
                                             <ul class="mt-2 text-sm text-gray-300 list-disc pl-5">
                                                 @foreach($q->choices as $ch)
-                                                    <li><span class="text-gray-400">{{ $ch->label }}.</span> {{ $ch->text }}</li>
+                                                    <li><span class="text-gray-400">{{ $ch->label }}.</span> {{ $ch->text }} @if($ch->is_correct)<span class="ml-2 text-emerald-400 text-xs">(juist)</span>@endif</li>
                                                 @endforeach
                                             </ul>
                                         @endif
                                     </div>
+                                    <div class="text-right space-y-2">
+                                        <a href="{{ route('docent.questions.results', $q) }}" class="text-xs px-3 py-1.5 rounded bg-sky-600 hover:bg-sky-700 inline-block">Bekijk antwoorden</a>
+                                        <form method="POST" action="{{ route('docent.questions.destroy', $q) }}" onsubmit="return confirm('Weet je zeker dat je deze vraag wil verwijderen?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="text-xs px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 inline-block">Verwijder</button>
+                                        </form>
+                                    </div>
                                 </div>
-                                <form method="POST" action="{{ route('docent.questions.activate', $q) }}" class="mt-4">
+                                @if($q->type==='multiple_choice' && $q->choices->isNotEmpty())
+                                <form method="POST" action="{{ route('docent.questions.setCorrect', $q) }}" class="mt-3">
+                                    @csrf
+                                    <div class="text-sm mb-2">Juiste antwoord instellen:</div>
+                                    <div class="flex flex-wrap gap-3">
+                                        @foreach($q->choices as $ch)
+                                            <label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded">
+                                                <input type="radio" name="choice_id" value="{{ $ch->id }}" class="form-radio text-emerald-500 bg-gray-800 border-gray-600" @checked($ch->is_correct)>
+                                                <span class="ml-2"><span class="text-gray-400">{{ $ch->label }}.</span> {{ $ch->text }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    <button class="mt-3 px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-sm">Opslaan</button>
+                                </form>
+                                @endif
+                                <form method="POST" action="{{ route('docent.questions.activate', $q) }}" class="mt-4" x-data @submit.prevent="
+                                    const boxes=[...$el.querySelectorAll('input[name=\'class_ids[]\']:checked')];
+                                    const warn = boxes.some(b=>b.closest('label')?.dataset.active==='1');
+                                    if(!warn || confirm('Er staat al een vraag actief in ten minste één geselecteerde klas. Doorgaan en overschrijven?')) $el.submit();
+                                ">
                                     @csrf
                                     <div class="text-sm mb-2">Activeer voor klassen:</div>
                                     <div class="flex flex-wrap gap-2">
                                         @if(is_iterable($classes))
                                             @foreach($classes as $class)
                                                 @if(is_object($class))
-                                                <label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded">
+                                                <label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded" data-active="{{ optional($class->activeQuestion)->id ? '1':'0' }}">
                                                     <input type="checkbox" name="class_ids[]" value="{{ $class->id }}" class="form-checkbox text-indigo-500 focus:ring-indigo-600 bg-gray-800 border-gray-600 rounded" @checked(optional($class->activeQuestion)->id === $q->id)>
                                                     <span class="ml-2">{{ $class->name }}</span>
                                                 </label>
