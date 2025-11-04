@@ -81,6 +81,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/classes/{class}/clear', [\App\Http\Controllers\QuestionController::class, 'clearActive'])->name('classes.clear');
         Route::get('/questions/{question}/results', [\App\Http\Controllers\QuestionController::class, 'results'])->name('questions.results');
         Route::post('/questions/{question}/correct', [\App\Http\Controllers\QuestionController::class, 'setCorrect'])->name('questions.setCorrect');
+        Route::post('/questions/{question}/grade', [\App\Http\Controllers\QuestionController::class, 'gradeOpen'])->name('questions.grade');
         Route::delete('/questions/{question}', [\App\Http\Controllers\QuestionController::class, 'destroy'])->name('questions.destroy');
     });
 

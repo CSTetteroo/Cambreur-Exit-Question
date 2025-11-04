@@ -8,7 +8,7 @@
             @if (session('status'))
                 <div class="p-3 rounded bg-green-800/60 border border-green-700 text-green-100">{{ session('status') }}</div>
             @endif
-            
+
             @if ($errors->any())
                 <div class="p-3 rounded bg-red-800/60 border border-red-700 text-red-100">
                     <ul class="list-disc pl-5 space-y-1 text-sm">

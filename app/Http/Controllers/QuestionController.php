@@ -148,8 +148,14 @@ class QuestionController extends Controller
         $rows = $students->map(function ($stu) use ($answersByUser, $question) {
             $ans = $answersByUser->get($stu->id);
             $status = 'neutral';
-            if ($question->type === 'multiple_choice' && $ans) {
-                $status = (optional($ans->choice)->is_correct ?? false) ? 'correct' : 'wrong';
+            if ($ans) {
+                if ($question->type === 'multiple_choice') {
+                    $status = (optional($ans->choice)->is_correct ?? false) ? 'correct' : 'wrong';
+                } else { // open question
+                    if (!is_null($ans->is_correct)) {
+                        $status = $ans->is_correct ? 'correct' : 'wrong';
+                    }
+                }
             }
             return [
                 'user' => $stu,
@@ -180,6 +186,25 @@ class QuestionController extends Controller
             'distribution' => $distribution,
             'rows' => $rows,
         ]);
+    }
+
+    // Grade an open-answer response as correct/incorrect
+    public function gradeOpen(Request $request, Question $question)
+    {
+        $this->authorizeQuestion($question);
+        if ($question->type !== 'open') {
+            abort(400, 'Beoordelen is alleen beschikbaar voor open vragen');
+        }
+        $data = $request->validate([
+            'answer_id' => 'required|integer|exists:answers,id',
+            'is_correct' => 'required|in:0,1',
+        ]);
+        $answer = \App\Models\Answer::where('id', $data['answer_id'])
+            ->where('question_id', $question->id)
+            ->firstOrFail();
+        $answer->is_correct = (bool) ((int) $data['is_correct']);
+        $answer->save();
+        return back()->with('status', 'Beoordeling opgeslagen');
     }
 
     public function destroy(Question $question)
