@@ -19,31 +19,6 @@
 
             <p class="mb-8 text-gray-400 text-center">Beheer docenten, klassen, studenten en admins.</p>
 
-        <!-- Add Docent Form -->
-        <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 mb-8 border border-gray-700">
-            <h2 class="text-2xl font-semibold mb-4">Docent toevoegen</h2>
-            <form method="POST" action="{{ route('users.store', ['role' => 'docent']) }}" class="space-y-4">
-                @csrf
-                <input type="hidden" name="role" value="docent">
-                <input type="text" name="name" placeholder="Naam docent" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring focus:ring-indigo-600/40" required>
-                <input type="email" name="email" placeholder="E-mail docent" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring focus:ring-indigo-600/40" required>
-                <input type="password" name="password" placeholder="Wachtwoord" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring focus:ring-indigo-600/40" required>
-                <div class="flex flex-wrap gap-3">
-                    @if(is_iterable($classes))
-                        @foreach($classes as $class)
-                            @if(is_object($class))
-                                <label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded">
-                                    <input type="checkbox" name="class_id[]" value="{{ $class->id }}" class="form-checkbox text-indigo-500 focus:ring-indigo-600 bg-gray-800 border-gray-600 rounded">
-                                    <span class="ml-2">{{ $class->name }}</span>
-                                </label>
-                            @endif
-                        @endforeach
-                    @endif
-                </div>
-                <button type="submit" class="px-6 py-2 rounded bg-indigo-600 hover:bg-indigo-700 transition text-sm font-medium">Toevoegen</button>
-            </form>
-        </div>
-
         <!-- Add Class Form -->
         <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 mb-8 border border-gray-700">
             <h2 class="text-2xl font-semibold mb-4">Klas toevoegen</h2>
@@ -63,6 +38,31 @@
                 <input type="hidden" name="role" value="student">
                 <input type="text" name="name" placeholder="Naam student" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring focus:ring-indigo-600/40" required>
                 <input type="email" name="email" placeholder="E-mail student" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring focus:ring-indigo-600/40" required>
+                <input type="password" name="password" placeholder="Wachtwoord" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring focus:ring-indigo-600/40" required>
+                <div class="flex flex-wrap gap-3">
+                    @if(is_iterable($classes))
+                        @foreach($classes as $class)
+                            @if(is_object($class))
+                                <label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded">
+                                    <input type="checkbox" name="class_id[]" value="{{ $class->id }}" class="form-checkbox text-indigo-500 focus:ring-indigo-600 bg-gray-800 border-gray-600 rounded">
+                                    <span class="ml-2">{{ $class->name }}</span>
+                                </label>
+                            @endif
+                        @endforeach
+                    @endif
+                </div>
+                <button type="submit" class="px-6 py-2 rounded bg-indigo-600 hover:bg-indigo-700 transition text-sm font-medium">Toevoegen</button>
+            </form>
+        </div>
+
+        <!-- Add Docent Form -->
+        <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 mb-8 border border-gray-700">
+            <h2 class="text-2xl font-semibold mb-4">Docent toevoegen</h2>
+            <form method="POST" action="{{ route('users.store', ['role' => 'docent']) }}" class="space-y-4">
+                @csrf
+                <input type="hidden" name="role" value="docent">
+                <input type="text" name="name" placeholder="Naam docent" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring focus:ring-indigo-600/40" required>
+                <input type="email" name="email" placeholder="E-mail docent" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring focus:ring-indigo-600/40" required>
                 <input type="password" name="password" placeholder="Wachtwoord" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring focus:ring-indigo-600/40" required>
                 <div class="flex flex-wrap gap-3">
                     @if(is_iterable($classes))
