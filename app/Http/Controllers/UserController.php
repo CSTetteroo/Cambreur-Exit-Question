@@ -12,7 +12,8 @@ class UserController extends Controller
 
     public function admin_index()
     {
-        $users = User::all();
+        // Eager load classes to avoid N+1 in grouping by class in the admin view
+        $users = User::with('classes')->get();
         return view('admin_dashboard', [
             'users' => $users,
             'classes' => ClassModel::all(),

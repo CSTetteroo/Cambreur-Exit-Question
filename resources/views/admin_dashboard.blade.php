@@ -71,7 +71,7 @@
             </form>
         </div>
 
-        <!-- Manage Accounts Section (grouped by role) -->
+        <!-- Manage Accounts Section (admins & docenten) -->
         <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 mb-8 border border-gray-700">
             <h2 class="text-2xl font-semibold mb-6">Accounts beheren</h2>
             @php
@@ -80,8 +80,8 @@
                 $studenten = $users->where('role','student');
             @endphp
 
-            @foreach ([['label'=>'Admins','data'=>$admins], ['label'=>'Docenten','data'=>$docenten], ['label'=>'Studenten','data'=>$studenten]] as $group)
-                <div class="mb-8">
+            @foreach ([['label'=>'Admins','data'=>$admins], ['label'=>'Docenten','data'=>$docenten]] as $group)
+                <div class="mb-10">
                     <h3 class="text-xl font-semibold mb-3">{{ $group['label'] }} <span class="text-sm text-gray-400">({{ $group['data']->count() }})</span></h3>
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-left text-gray-300 text-sm">
@@ -114,6 +114,85 @@
                     </div>
                 </div>
             @endforeach
+
+            <!-- Students grouped by class -->
+            <div class="mt-2">
+                <h3 class="text-xl font-semibold mb-4">Studenten per klas</h3>
+                @php
+                    $classesCollection = ($classes instanceof \Illuminate\Support\Collection) ? $classes : collect(is_iterable($classes) ? $classes : []);
+                    $classesOrdered = $classesCollection->sortBy('name');
+                    $studentsNoClass = $studenten->filter(fn($s) => $s->classes->isEmpty());
+                @endphp
+                @forelse($classesOrdered as $class)
+                    @php $classStudents = $studenten->filter(fn($s) => $s->classes->contains('id', $class->id)); @endphp
+                    <div class="mb-6">
+                        <h4 class="text-lg font-semibold mb-2">{{ $class->name }} <span class="text-sm text-gray-400">({{ $classStudents->count() }})</span></h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-left text-gray-300 text-sm">
+                                <thead class="bg-gray-700/40">
+                                    <tr>
+                                        <th class="px-4 py-2 font-medium">Naam</th>
+                                        <th class="px-4 py-2 font-medium">E-mail</th>
+                                        <th class="px-4 py-2 font-medium">Acties</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-700/70">
+                                    @forelse($classStudents as $user)
+                                        <tr class="hover:bg-gray-700/30">
+                                            <td class="px-4 py-2">{{ $user->name }}</td>
+                                            <td class="px-4 py-2">{{ $user->email }}</td>
+                                            <td class="px-4 py-2 space-x-3">
+                                                <a href="{{ route('users.edit', $user->id) }}" class="text-indigo-400 hover:text-indigo-300">Bewerken</a>
+                                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-400 hover:text-red-300" onclick="return confirm('Weet je zeker dat je deze gebruiker wilt verwijderen?')">Verwijderen</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="3" class="px-4 py-3 text-gray-500">Geen studenten in deze klas.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @empty
+                    <p class="text-sm text-gray-500">Geen klassen gevonden.</p>
+                @endforelse
+                @if($studentsNoClass->count() > 0)
+                    <div class="mb-6">
+                        <h4 class="text-lg font-semibold mb-2">Geen klas <span class="text-sm text-gray-400">({{ $studentsNoClass->count() }})</span></h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-left text-gray-300 text-sm">
+                                <thead class="bg-gray-700/40">
+                                    <tr>
+                                        <th class="px-4 py-2 font-medium">Naam</th>
+                                        <th class="px-4 py-2 font-medium">E-mail</th>
+                                        <th class="px-4 py-2 font-medium">Acties</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-700/70">
+                                    @foreach($studentsNoClass as $user)
+                                        <tr class="hover:bg-gray-700/30">
+                                            <td class="px-4 py-2">{{ $user->name }}</td>
+                                            <td class="px-4 py-2">{{ $user->email }}</td>
+                                            <td class="px-4 py-2 space-x-3">
+                                                <a href="{{ route('users.edit', $user->id) }}" class="text-indigo-400 hover:text-indigo-300">Bewerken</a>
+                                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-400 hover:text-red-300" onclick="return confirm('Weet je zeker dat je deze gebruiker wilt verwijderen?')">Verwijderen</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
     </div>
