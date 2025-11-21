@@ -155,7 +155,7 @@
                                                         @click.stop class="">
                                                         @csrf
                                                         <div class="text-sm mb-2">Activeer voor klassen:</div>
-                                                        @php 
+                                                        @php
                                                             $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect());
                                                             $selectedClassIds = $classesList->filter(fn($c) => optional($c->activeQuestion)->id === $q->id)->pluck('id')->all();
                                                         @endphp
@@ -226,7 +226,7 @@
                     </template>
                     <div>
                         <label class="block text-sm mb-2">Activeer direct voor klassen (optioneel)</label>
-                        @php 
+                        @php
                             $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect());
                             $selectedActivate = is_array(old('activate_class_ids')) ? old('activate_class_ids') : [];
                         @endphp

@@ -34,18 +34,19 @@
                     <button type="button" class="ml-1 text-gray-300 hover:text-gray-100" @click="toggle(item.id)" aria-label="Verwijder">&times;</button>
                 </span>
             </template>
-            <button type="button" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-xs" @click="open = !open">
+            <button x-ref="trigger" type="button" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-xs" @click="toggleOpen()">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
                 <span>Toevoegen</span>
             </button>
         </div>
-
-        <!-- Dropdown -->
-        <div class="relative" x-show="open" x-cloak @click.outside="open=false">
-            <div class="absolute z-40 mt-1 w-full rounded border border-gray-600 bg-gray-800 shadow-lg">
-                <div class="p-2 border-b border-gray-700">
-                    <input type="text" x-model="search" placeholder="Zoeken..." class="w-full px-2 py-1 rounded bg-gray-700 border border-gray-600 text-sm">
-                </div>
+        <!-- Teleported Dropdown -->
+        <template x-teleport="body">
+            <div x-show="open" x-cloak x-transition.opacity @keydown.escape.window="open=false" @click.outside="open=false"
+                 :style="`position:fixed; top:${dropdownY}px; left:${dropdownX}px; width:${dropdownW}px;`"
+                 class="z-[999] rounded border border-gray-600 bg-gray-800 shadow-xl">
+                <div class="p-2 border-b border-gray-700 flex items-center gap-2">
+                    <input type="text" x-model="search" placeholder="Zoeken..." class="flex-1 px-2 py-1 rounded bg-gray-700 border border-gray-600 text-sm">
+                    <button type="button" @click="clearAll()" class="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600">Wis</button>                </div>
                 <ul class="max-h-64 overflow-auto py-1">
                     <template x-for="opt in filteredOptions" :key="'opt-'+opt.id">
                         <li>
@@ -62,7 +63,7 @@
                     </template>
                 </ul>
             </div>
-        </div>
+        </template>
     </div>
 </div>
 
@@ -70,6 +71,9 @@
     function classMultiSelect({ initialSelected = [], options = [], name = 'class_id[]', placeholder = 'Selecteer klassen' }){
         return {
             open: false,
+            dropdownX: 0,
+            dropdownY: 0,
+            dropdownW: 260,
             search: '',
             name,
             placeholder,
@@ -93,6 +97,30 @@
                 } else {
                     this.selected.push(id);
                 }
+            },
+            toggleOpen(){
+                if(!this.open){
+                    this.computePosition();
+                    this.open = true;
+                } else {
+                    this.open = false;
+                }
+            },
+            computePosition(){
+                this.$nextTick(() => {
+                    const btn = this.$refs.trigger;
+                    if(!btn) return;
+                    const rect = btn.getBoundingClientRect();
+                    this.dropdownX = rect.left;
+                    this.dropdownY = rect.bottom + 4; // little gap
+                    this.dropdownW = rect.width < 220 ? 220 : rect.width; // min width
+                });
+            },
+            selectAll(){
+                this.selected = this.options.map(o => o.id);
+            },
+            clearAll(){
+                this.selected = [];
             }
         }
     }
