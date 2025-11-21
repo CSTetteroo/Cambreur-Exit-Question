@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Gebruiker bewerken</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center px-4 py-8">
     <div class="max-w-lg w-full">
@@ -23,16 +24,7 @@
             </select>
             <div id="class-section" class="mt-2 @if(!in_array($user->role,['student','docent'])) hidden @endif">
                 <label class="block mb-2">Koppeling aan klassen:</label>
-                <div class="flex flex-wrap gap-2">
-                    @foreach($classes as $class)
-                        @if(is_object($class))
-                        <label class="inline-flex items-center">
-                            <input type="checkbox" name="class_id[]" value="{{ $class->id }}" class="form-checkbox text-indigo-600 bg-gray-700 border-gray-600 rounded" @if($user->classes->contains($class->id)) checked @endif>
-                            <span class="ml-2">{{ $class->name }}</span>
-                        </label>
-                        @endif
-                    @endforeach
-                </div>
+                <x-class-multiselect name="class_id[]" :classes="$classes" :selected="$user->classes->pluck('id')->all()" placeholder="Selecteer klassen" />
             </div>
             <button type="submit" class="w-full px-6 py-2 rounded bg-indigo-600 hover:bg-indigo-700 transition">Opslaan</button>
         </form>

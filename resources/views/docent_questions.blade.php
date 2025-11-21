@@ -155,21 +155,11 @@
                                                         @click.stop class="">
                                                         @csrf
                                                         <div class="text-sm mb-2">Activeer voor klassen:</div>
-                                                        @php $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()); @endphp
-                                                        <div class="flex flex-wrap gap-2">
-                                                            @foreach ($classesList as $class)
-                                                                @if (is_object($class))
-                                                                    <label
-                                                                        class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded">
-                                                                        <input type="checkbox" name="class_ids[]"
-                                                                            value="{{ $class->id }}"
-                                                                            class="form-checkbox text-indigo-500 focus:ring-indigo-600 bg-gray-800 border-gray-600 rounded"
-                                                                            @checked(optional($class->activeQuestion)->id === $q->id)>
-                                                                        <span class="ml-2">{{ $class->name }}</span>
-                                                                    </label>
-                                                                @endif
-                                                            @endforeach
-                                                        </div>
+                                                        @php 
+                                                            $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect());
+                                                            $selectedClassIds = $classesList->filter(fn($c) => optional($c->activeQuestion)->id === $q->id)->pluck('id')->all();
+                                                        @endphp
+                                                        <x-class-multiselect name="class_ids[]" :classes="$classesList" :selected="$selectedClassIds" placeholder="Kies klassen" />
                                                         <button
                                                             class="mt-3 px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-sm">Activeer</button>
                                                     </form>
@@ -236,19 +226,11 @@
                     </template>
                     <div>
                         <label class="block text-sm mb-2">Activeer direct voor klassen (optioneel)</label>
-                        @php $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()); @endphp
-                        <div class="flex flex-wrap gap-2">
-                            @foreach ($classesList as $class)
-                                @if (is_object($class))
-                                    <label class="inline-flex items-center text-sm bg-gray-700/60 px-2 py-1 rounded">
-                                        <input type="checkbox" name="activate_class_ids[]"
-                                            value="{{ $class->id }}"
-                                            class="form-checkbox text-indigo-500 focus:ring-indigo-600 bg-gray-800 border-gray-600 rounded">
-                                        <span class="ml-2">{{ $class->name }}</span>
-                                    </label>
-                                @endif
-                            @endforeach
-                        </div>
+                        @php 
+                            $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect());
+                            $selectedActivate = is_array(old('activate_class_ids')) ? old('activate_class_ids') : [];
+                        @endphp
+                        <x-class-multiselect name="activate_class_ids[]" :classes="$classesList" :selected="$selectedActivate" placeholder="Selecteer klassen" />
                     </div>
                     <button class="px-6 py-2 rounded bg-indigo-600 hover:bg-indigo-700">Opslaan</button>
                 </form>
