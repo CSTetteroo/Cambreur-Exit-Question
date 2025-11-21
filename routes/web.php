@@ -92,6 +92,13 @@ Route::middleware('auth')->group(function () {
 
     // Answers (students)
     Route::post('/answers', [\App\Http\Controllers\AnswerController::class, 'store'])->name('answers.store');
+
+    // First-time password change
+    Route::get('/first-password', [\App\Http\Controllers\Auth\FirstPasswordController::class, 'show'])->name('password.first.show');
+    Route::post('/first-password', [\App\Http\Controllers\Auth\FirstPasswordController::class, 'update'])->name('password.first.update');
+
+    // Password reset by admin/docent (controller enforces role checks)
+    Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset_password');
 });
 
 require __DIR__.'/auth.php';

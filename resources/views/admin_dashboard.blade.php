@@ -38,7 +38,7 @@
                 <input type="hidden" name="role" value="student">
                 <input type="text" name="name" placeholder="Naam student" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring focus:ring-indigo-600/40" required>
                 <input type="text" name="login_id" placeholder="Studentnummer (bv. 64015992)" pattern="[0-9]{4,20}" title="4-20 cijfers" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring focus:ring-indigo-600/40" required>
-                <input type="password" name="password" placeholder="Wachtwoord" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring focus:ring-indigo-600/40" required>
+                <p class="text-xs text-gray-400">Standaard wachtwoord wordt ingesteld (Welkom123!) en moet bij eerste login worden gewijzigd.</p>
                 <x-class-multiselect name="class_id[]" :classes="$classes" :selected="(array) old('class_id', [])" placeholder="Koppelen aan klassen" />
                 <button type="submit" class="px-6 py-2 rounded bg-indigo-600 hover:bg-indigo-700 transition text-sm font-medium">Toevoegen</button>
             </form>
@@ -143,6 +143,10 @@
                                             <td class="px-4 py-2">{{ $user->email }}</td>
                                             <td class="px-4 py-2 space-x-3">
                                                 <a href="{{ route('users.edit', $user->id) }}" class="text-indigo-400 hover:text-indigo-300">Bewerken</a>
+                                                <form action="{{ route('users.reset_password', $user->id) }}" method="POST" class="inline">
+                                                    @csrf
+                                                    <button type="submit" class="text-yellow-400 hover:text-yellow-300" onclick="return confirm('Wachtwoord resetten naar standaard en wijziging vereisen bij volgende login?')">Reset wachtwoord</button>
+                                                </form>
                                                 <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline">
                                                     @csrf
                                                     @method('DELETE')
@@ -179,6 +183,10 @@
                                             <td class="px-4 py-2">{{ $user->email }}</td>
                                             <td class="px-4 py-2 space-x-3">
                                                 <a href="{{ route('users.edit', $user->id) }}" class="text-indigo-400 hover:text-indigo-300">Bewerken</a>
+                                                <form action="{{ route('users.reset_password', $user->id) }}" method="POST" class="inline">
+                                                    @csrf
+                                                    <button type="submit" class="text-yellow-400 hover:text-yellow-300" onclick="return confirm('Wachtwoord resetten naar standaard en wijziging vereisen bij volgende login?')">Reset wachtwoord</button>
+                                                </form>
                                                 <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline">
                                                     @csrf
                                                     @method('DELETE')

@@ -27,7 +27,7 @@ class UserController extends Controller
         $rules = [
             'name' => 'required|string|max:255',
             'role' => 'required|in:admin,docent,student',
-            'password' => 'required|string|min:6',
+            'password' => 'nullable|string|min:6',
             'class_id' => 'nullable|array',
             'class_id.*' => 'exists:classes,id',
         ];
@@ -44,7 +44,9 @@ class UserController extends Controller
         $user->name = $request->name;
         $user->email = $request->role === 'student' ? $request->login_id : $request->email;
         $user->role = $request->role;
-        $user->password = Hash::make($request->password ?? 'password');
+        $providedPassword = $request->password;
+        $user->password = Hash::make($providedPassword ?: 'Welkom123!');
+        $user->must_change_password = empty($providedPassword);
         $user->save();
 
         // Attach to classes if student or docent, avoid duplicates
@@ -89,6 +91,7 @@ class UserController extends Controller
         $user->role = $validated['role'];
         if (!empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
+            $user->must_change_password = false;
         }
         $user->save();
 
@@ -108,5 +111,22 @@ class UserController extends Controller
         $user = User::findOrFail($id);
         $user->delete();
         return redirect()->back();
+    }
+
+    public function resetPassword($id)
+    {
+        $current = auth()->user();
+        if (!$current || !in_array($current->role, ['admin','docent'])) {
+            abort(403);
+        }
+        $user = User::findOrFail($id);
+        if ($user->role !== 'student' && $current->role !== 'admin') {
+            // Only admins may reset non-student passwords
+            abort(403);
+        }
+        $user->password = Hash::make('Welkom123!');
+        $user->must_change_password = true;
+        $user->save();
+        return redirect()->back()->with('status', 'Wachtwoord gereset naar standaard en wijziging vereist bij volgende login.');
     }
 }
