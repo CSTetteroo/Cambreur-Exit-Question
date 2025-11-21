@@ -53,7 +53,7 @@
 									</div>
 								</div>
 								@if($already)
-									<div class="px-3 py-2 rounded border border-emerald-700 bg-emerald-800/40 text-emerald-100 text-sm">Je hebt al geantwoord op deze vraag.</div>
+									<div class="px-3 py-2 rounded border border-emerald-700 bg-emerald-800/40 text-emerald-100 text-sm">Jouw antwoord is opgeslagen!</div>
 								@else
 									<form method="POST" action="{{ route('answers.store') }}" class="space-y-2">
 										@csrf

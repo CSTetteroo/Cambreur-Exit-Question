@@ -26,21 +26,23 @@ class UserController extends Controller
 
         $rules = [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
             'role' => 'required|in:admin,docent,student',
             'password' => 'required|string|min:6',
             'class_id' => 'nullable|array',
             'class_id.*' => 'exists:classes,id',
         ];
-        // Only require class_id for students, optional for docenten, not for admins
+        // Distinguish identifier: students use numeric login id, others use email
         if ($request->role === 'student') {
+            $rules['login_id'] = 'required|string|regex:/^[0-9]{4,20}$/|unique:users,email';
             $rules['class_id'] = 'required|array|min:1';
+        } else {
+            $rules['email'] = 'required|email|unique:users,email';
         }
         $request->validate($rules);
 
         $user = new User();
         $user->name = $request->name;
-        $user->email = $request->email;
+        $user->email = $request->role === 'student' ? $request->login_id : $request->email;
         $user->role = $request->role;
         $user->password = Hash::make($request->password ?? 'password');
         $user->save();
@@ -69,19 +71,21 @@ class UserController extends Controller
         // Build validation rules
         $rules = [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
             'role' => 'required|in:admin,docent,student',
             'password' => 'nullable|string|min:6',
             'class_id' => 'nullable|array',
             'class_id.*' => 'exists:classes,id'
         ];
         if ($request->role === 'student') {
+            $rules['login_id'] = 'required|string|regex:/^[0-9]{4,20}$/|unique:users,email,' . $user->id;
             $rules['class_id'] = 'required|array|min:1';
+        } else {
+            $rules['email'] = 'required|email|unique:users,email,' . $user->id;
         }
         $validated = $request->validate($rules);
 
         $user->name = $validated['name'];
-        $user->email = $validated['email'];
+        $user->email = $validated['role'] === 'student' ? $validated['login_id'] : $validated['email'];
         $user->role = $validated['role'];
         if (!empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);

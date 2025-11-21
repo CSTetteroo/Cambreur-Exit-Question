@@ -15,7 +15,11 @@
             @csrf
             @method('PUT')
             <input type="text" name="name" value="{{ old('name', $user->name) }}" placeholder="Naam" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100" required>
-            <input type="email" name="email" value="{{ old('email', $user->email) }}" placeholder="E-mail" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100" required>
+            @if(in_array($user->role,['student']))
+                <input type="text" name="login_id" value="{{ old('login_id', $user->email) }}" placeholder="Studentnummer" pattern="[0-9]{4,20}" title="4-20 cijfers" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100" required>
+            @else
+                <input type="email" name="email" value="{{ old('email', $user->email) }}" placeholder="E-mail" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100" required>
+            @endif
             <input type="password" name="password" placeholder="Nieuw wachtwoord (optioneel)" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100">
             <select name="role" id="role-select" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100" required>
                 <option value="admin" @if($user->role=='admin') selected @endif>Admin</option>

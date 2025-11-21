@@ -27,7 +27,9 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            // Accept either a numeric student number (4-20 digits) or a normal email.
+            // We loosen the rule to a string + regex instead of Laravel's 'email' rule.
+            'email' => ['required', 'string', 'regex:/^([0-9]{4,20}|[^@\s]+@[^@\s]+\.[^@\s]+)$/'],
             'password' => ['required', 'string'],
         ];
     }
