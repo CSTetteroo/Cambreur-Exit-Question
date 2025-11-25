@@ -11,9 +11,33 @@
 				<p class="text-gray-300 text-sm">E-mail: {{ $user->email }}</p>
 			</section>
 
+			@if(in_array($user->role, ['admin','docent']))
+			<section class="bg-gray-800/80 border border-gray-700 rounded-lg p-6">
+				<h3 class="text-xl font-semibold mb-3">Alle klassen</h3>
+                @if(($allClasses ?? collect())->isEmpty())
+					<p class="text-gray-400">Geen klassen gevonden.</p>
+				@else
+						<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+							@foreach($allClasses as $class)
+							<div class="p-4 bg-gray-800/60 rounded border border-gray-700 flex flex-col justify-between h-full">
+								<div>
+									<div class="font-semibold text-gray-100 mb-1"><a href="{{ route('classes.show', $class) }}" class="hover:underline">{{ $class->name }}</a></div>
+									<div class="text-xs text-gray-400">Actieve vraag:</div>
+									<div class="text-sm text-gray-200 mt-1 break-words">{{ optional($class->activeQuestion)->id ? Str::limit(optional($class->activeQuestion)->content, 120) : '(N/A)' }}</div>
+								</div>
+								<div class="mt-4 flex justify-end">
+									<a href="{{ route('classes.show', $class) }}" class="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-700 text-sm">Bekijk klas</a>
+								</div>
+							</div>
+						@endforeach
+					</div>
+				@endif
+			</section>
+			@endif
+
 			<section class="bg-gray-800/80 border border-gray-700 rounded-lg p-6">
 				<div class="flex items-center justify-between mb-4">
-					<h3 class="text-xl font-semibold">Beschikbare vragen</h3>
+					<h3 class="text-xl font-semibold">Mijn vragen</h3>
 					<div class="flex items-center gap-3">
 						@if($user->role==='docent')
 							<a href="{{ route('docent.questions.index') }}" class="text-xs px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-700">Vragen beheren</a>

@@ -250,25 +250,30 @@
             <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 border border-gray-700">
                 <h3 class="text-2xl font-semibold mt-4">Actieve vraag per klas:</h3>
                 <label class="block text-sm mb-2">Er kan maar een actieve vraag per klas zijn, de rode knop stopt de vraagstelling voor de klas. Leerlingen kunnen dan niet meer antwoorden.</label>
-                <ul class="divide-y divide-gray-700/70">
-                    @php $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()); @endphp
-                    @foreach ($classesList as $class)
-                        @if (is_object($class))
-                            <li class="py-3 flex items-center justify-between">
-                                <div>
-                                    <div class="font-medium">{{ $class->name }}</div>
-                                    <div class="text-xs text-gray-400">Actieve vraag:
-                                        {{ optional($class->activeQuestion)->id ? Str::limit($class->activeQuestion->content, 60) : '—' }}
+                @php $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()); @endphp
+                @if($classesList->isEmpty())
+                    <p class="text-gray-400">Geen klassen gevonden.</p>
+                @else
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        @foreach ($classesList as $class)
+                            @if(is_object($class))
+                                <div class="p-4 bg-gray-800/60 rounded border border-gray-700 flex flex-col justify-between h-full">
+                                    <div>
+                                        <div class="font-semibold text-gray-100 mb-1"><a href="{{ route('classes.show', $class) }}" class="hover:underline">{{ $class->name }}</a></div>
+                                        <div class="text-xs text-gray-400">Actieve vraag:</div>
+                                        <div class="text-sm text-gray-200 mt-1 break-words">{{ optional($class->activeQuestion)->id ? Str::limit(optional($class->activeQuestion)->content, 100) : '—' }}</div>
+                                    </div>
+                                    <div class="mt-4 flex justify-end">
+                                        <form method="POST" action="{{ route('docent.classes.clear', $class) }}" onsubmit="return confirm('Dit verwijdert de actieve vraag uit deze klas. Studenten kunnen deze vraag daarna niet meer beantwoorden. U kunt nog wel alle antwoorden bekijken. Weet je zeker dat je wilt doorgaan?');">
+                                            @csrf
+                                            <button type="submit" class="px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 text-sm">Stop Vraagstelling</button>
+                                        </form>
                                     </div>
                                 </div>
-                                <form method="POST" action="{{ route('docent.classes.clear', $class) }}" onsubmit="return confirm('Dit verwijdert de actieve vraag uit deze klas. Studenten kunnen deze vraag daarna niet meer beantwoorden. U kunt nog wel alle antwoorden bekijken. Weet je zeker dat je wilt doorgaan?');">
-                                    @csrf
-                                    <button type="submit" class="px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 text-sm">Stop Vraagstelling</button>
-                                </form>
-                            </li>
-                        @endif
-                    @endforeach
-                </ul>
+                            @endif
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </div>
     </div>

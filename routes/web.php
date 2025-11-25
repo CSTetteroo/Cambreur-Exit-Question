@@ -75,7 +75,9 @@ Route::middleware('auth')->group(function () {
                 ->where('created_by', $user->id)
                 ->latest()->take(50)->get();
         }
-        return view('user_dashboard', compact('user', 'questions', 'answeredIds', 'myClasses'));
+        // Also pass all classes for admin/docent dashboard cards to avoid querying in the view
+        $allClasses = \App\Models\ClassModel::orderBy('name')->get();
+        return view('user_dashboard', compact('user', 'questions', 'answeredIds', 'myClasses', 'allClasses'));
     })->name('dashboard');
 
     // Docent-only question management
@@ -90,6 +92,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/questions/{question}/grade', [\App\Http\Controllers\QuestionController::class, 'gradeOpen'])->name('questions.grade');
         Route::delete('/questions/{question}', [\App\Http\Controllers\QuestionController::class, 'destroy'])->name('questions.destroy');
     });
+
+    // Class detail routes (accessible to admin and docent, controller enforces role)
+    Route::get('/classes/{class}', [\App\Http\Controllers\ClassController::class, 'show'])->name('classes.show');
+    Route::get('/classes/{class}/students/{user}', [\App\Http\Controllers\ClassController::class, 'studentShow'])->name('classes.student.show');
 
     // Answers (students)
     Route::post('/answers', [\App\Http\Controllers\AnswerController::class, 'store'])->name('answers.store');
