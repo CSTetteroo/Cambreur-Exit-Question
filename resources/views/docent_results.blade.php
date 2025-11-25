@@ -82,11 +82,16 @@
                                     <td class="px-3 py-2">{{ optional($row['user'])->name ?? 'Onbekend' }}</td>
                                     <td class="px-3 py-2">
                                         <div>
-                                            <button type="button" class="text-left w-full group" @click="showQ=!showQ">
-                                                <span class="block line-clamp-2 break-words group-hover:underline">{{ Str::limit($question->content, 60) }}</span>
-                                                <span class="text-xs text-indigo-300" x-show="!showQ">Meer...</span>
-                                            </button>
-                                            <div class="mt-1 text-gray-200 whitespace-pre-line break-words" x-show="showQ">{{ $question->content }}</div>
+                                            @php $qFull = $question->content; $qLimit = 60; @endphp
+                                            @if(Str::length($qFull) > $qLimit)
+                                                <button type="button" class="text-left w-full group" @click="showQ=!showQ">
+                                                    <span class="block line-clamp-2 break-words group-hover:underline" x-show="!showQ">{{ Str::limit($qFull, $qLimit) }}</span>
+                                                    <span class="block whitespace-pre-line break-words" x-show="showQ">{{ $qFull }}</span>
+                                                    <span class="text-xs text-indigo-300" x-show="!showQ">Meer...</span>
+                                                </button>
+                                            @else
+                                                <span class="block break-words whitespace-pre-line">{{ $qFull }}</span>
+                                            @endif
                                         </div>
                                     </td>
                                     <td class="px-3 py-2">
@@ -95,11 +100,16 @@
                                         @else
                                             @if($ans)
                                             <div>
-                                                <button type="button" class="text-left w-full group" @click="showA=!showA">
-                                                    <span class="block line-clamp-2 break-words group-hover:underline">{{ Str::limit($ans->answer_text, 60) }}</span>
-                                                    <span class="text-xs text-indigo-300" x-show="!showA">Meer...</span>
-                                                </button>
-                                                <div class="mt-1 text-gray-200 whitespace-pre-line break-words" x-show="showA">{{ $ans->answer_text }}</div>
+                                                @php $aFull = $ans->answer_text; $aLimit = 60; @endphp
+                                                @if(Str::length($aFull) > $aLimit)
+                                                    <button type="button" class="text-left w-full group" @click="showA=!showA">
+                                                        <span class="block line-clamp-2 break-words group-hover:underline" x-show="!showA">{{ Str::limit($aFull, $aLimit) }}</span>
+                                                        <span class="block whitespace-pre-line break-words" x-show="showA">{{ $aFull }}</span>
+                                                        <span class="text-xs text-indigo-300" x-show="!showA">Meer...</span>
+                                                    </button>
+                                                @else
+                                                    <span class="block break-words whitespace-pre-line">{{ $aFull }}</span>
+                                                @endif
                                             </div>
                                             @else
                                                 <span class="text-gray-500">—</span>
