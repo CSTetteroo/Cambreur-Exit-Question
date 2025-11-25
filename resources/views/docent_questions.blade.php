@@ -86,16 +86,25 @@
                                         <td class="px-4 py-3 align-top text-sm text-gray-300">{{ $q->answers_count }}
                                         </td>
                                         <td class="px-4 py-3 align-top text-right space-x-2 whitespace-nowrap">
+                                            @php
+                                                $classesCollection = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect());
+                                                $isActiveAnywhere = $classesCollection->contains(fn($c) => optional($c->activeQuestion)->id === $q->id);
+                                            @endphp
+                                            @if($isActiveAnywhere)
+                                                <form method="POST" action="{{ route('docent.questions.time_is_up', $q) }}" class="inline" onsubmit="return confirm('Tijd is om — dit zet deze vraag uit. Studenten kunnen hierna niet meer antwoorden. Weet je zeker?');">
+                                                    @csrf
+                                                    <button type="submit" class="text-xs px-3 py-1.5 rounded bg-yellow-600 hover:bg-yellow-700 inline-block">Finish!</button>
+                                                </form>
+                                            @endif
                                             <a href="{{ route('docent.questions.results', $q) }}"
-                                                class="text-xs px-3 py-1.5 rounded bg-sky-600 hover:bg-sky-700 inline-block">Bekijk
-                                                antwoorden</a>
+                                                class="text-xs px-3 py-1.5 rounded bg-sky-600 hover:bg-sky-700 inline-block">Resultaten</a>
                                             <form method="POST" action="{{ route('docent.questions.destroy', $q) }}"
                                                 class="inline"
                                                 onsubmit="return confirm('Weet je zeker dat je deze vraag wil verwijderen? Dit is niet terug te draaien.');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button
-                                                    class="text-xs px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 inline-block">Verwijder</button>
+                                                    class="text-xs px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 inline-block">X</button>
                                             </form>
                                         </td>
                                     </tr>
@@ -240,7 +249,7 @@
             <!-- Classes and active question overview -->
             <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 border border-gray-700">
                 <h3 class="text-2xl font-semibold mt-4">Actieve vraag per klas:</h3>
-                <label class="block text-sm mb-2">Er kan maar een actieve vraag per klas zijn, zorg ervoor dat u zeker weet op welke klas de vraag geactiveerd wordt.</label>
+                <label class="block text-sm mb-2">Er kan maar een actieve vraag per klas zijn, de rode knop stopt de vraagstelling voor de klas. Leerlingen kunnen dan niet meer antwoorden.</label>
                 <ul class="divide-y divide-gray-700/70">
                     @php $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()); @endphp
                     @foreach ($classesList as $class)
@@ -254,7 +263,7 @@
                                 </div>
                                 <form method="POST" action="{{ route('docent.classes.clear', $class) }}" onsubmit="return confirm('Dit verwijdert de actieve vraag uit deze klas. Studenten kunnen deze vraag daarna niet meer beantwoorden. U kunt nog wel alle antwoorden bekijken. Weet je zeker dat je wilt doorgaan?');">
                                     @csrf
-                                    <button type="submit" class="px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 text-sm">Wis actief</button>
+                                    <button type="submit" class="px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 text-sm">Stop Vraagstelling</button>
                                 </form>
                             </li>
                         @endif

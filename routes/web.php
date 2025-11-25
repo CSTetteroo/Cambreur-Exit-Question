@@ -83,6 +83,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/questions', [\App\Http\Controllers\QuestionController::class, 'index'])->name('questions.index');
         Route::post('/questions', [\App\Http\Controllers\QuestionController::class, 'store'])->name('questions.store');
         Route::post('/questions/{question}/activate', [\App\Http\Controllers\QuestionController::class, 'activate'])->name('questions.activate');
+        Route::post('/questions/{question}/time-is-up', [\App\Http\Controllers\QuestionController::class, 'timeIsUp'])->name('questions.time_is_up');
         Route::post('/classes/{class}/clear', [\App\Http\Controllers\QuestionController::class, 'clearActive'])->name('classes.clear');
         Route::get('/questions/{question}/results', [\App\Http\Controllers\QuestionController::class, 'results'])->name('questions.results');
         Route::post('/questions/{question}/correct', [\App\Http\Controllers\QuestionController::class, 'setCorrect'])->name('questions.setCorrect');

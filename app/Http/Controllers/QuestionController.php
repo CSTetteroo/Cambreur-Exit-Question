@@ -222,6 +222,15 @@ class QuestionController extends Controller
         return back()->with('status', 'Vraag verwijderd');
     }
 
+    // Turn off this question for all classes (time is up)
+    public function timeIsUp(Question $question)
+    {
+        $this->authorizeQuestion($question);
+        // Clear active_question_id where this question is active
+        ClassModel::where('active_question_id', $question->id)->update(['active_question_id' => null]);
+        return back()->with('status', 'Vraag uitgezet voor alle klassen. Studenten kunnen niet meer antwoorden.');
+    }
+
     // Activate existing question for selected classes
     public function activate(Request $request, Question $question)
     {
