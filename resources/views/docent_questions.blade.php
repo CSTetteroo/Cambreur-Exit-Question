@@ -91,7 +91,7 @@
                                                 antwoorden</a>
                                             <form method="POST" action="{{ route('docent.questions.destroy', $q) }}"
                                                 class="inline"
-                                                onsubmit="return confirm('Weet je zeker dat je deze vraag wil verwijderen?');">
+                                                onsubmit="return confirm('Weet je zeker dat je deze vraag wil verwijderen? Dit is niet terug te draaien.');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button
@@ -152,7 +152,7 @@
                                                 <div>
                                                     <form method="POST"
                                                         action="{{ route('docent.questions.activate', $q) }}"
-                                                        @click.stop class="">
+                                                        @click.stop class="" onsubmit="return confirm('Activeren zorg ervoor dat deze vraag de oude vraag voor de geselecteerde klassen verplaatst word. Studenten kunnen de vorige vraag daarna niet meer beantwoorden. Weet je zeker dat je wilt doorgaan?');">
                                                         @csrf
                                                         <div class="text-sm mb-2">Activeer voor klassen:</div>
                                                         @php
@@ -239,7 +239,8 @@
 
             <!-- Classes and active question overview -->
             <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 border border-gray-700">
-                <h3 class="text-2xl font-semibold mb-4">Klassen overzicht</h3>
+                <h3 class="text-2xl font-semibold mt-4">Actieve vraag per klas:</h3>
+                <label class="block text-sm mb-2">Er kan maar een actieve vraag per klas zijn, zorg ervoor dat u zeker weet op welke klas de vraag geactiveerd wordt.</label>
                 <ul class="divide-y divide-gray-700/70">
                     @php $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()); @endphp
                     @foreach ($classesList as $class)
@@ -251,7 +252,7 @@
                                         {{ optional($class->activeQuestion)->id ? Str::limit($class->activeQuestion->content, 60) : '—' }}
                                     </div>
                                 </div>
-                                <form method="POST" action="{{ route('docent.classes.clear', $class) }}" onsubmit="return confirm('Dit verwijdert de actieve vraag uit deze klas. Studenten kunnen deze vraag daarna niet meer beantwoorden. Weet je zeker dat je wilt doorgaan?');">
+                                <form method="POST" action="{{ route('docent.classes.clear', $class) }}" onsubmit="return confirm('Dit verwijdert de actieve vraag uit deze klas. Studenten kunnen deze vraag daarna niet meer beantwoorden. U kunt nog wel alle antwoorden bekijken. Weet je zeker dat je wilt doorgaan?');">
                                     @csrf
                                     <button type="submit" class="px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 text-sm">Wis actief</button>
                                 </form>
