@@ -100,7 +100,7 @@
                                                 class="text-xs px-3 py-1.5 rounded bg-sky-600 hover:bg-sky-700 inline-block">Resultaten</a>
                                             <form method="POST" action="{{ route('docent.questions.destroy', $q) }}"
                                                 class="inline"
-                                                onsubmit="return confirm('Weet je zeker dat je deze vraag wil verwijderen? Dit is niet terug te draaien.');">
+                                                onsubmit="return confirm('Weet je zeker dat je deze vraag wil verwijderen? Dit verwijderd ook alle resultaten van alle studenten en is niet terug te draaien.');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button
@@ -169,6 +169,7 @@
                                                             $selectedClassIds = $classesList->filter(fn($c) => optional($c->activeQuestion)->id === $q->id)->pluck('id')->all();
                                                         @endphp
                                                         <x-class-multiselect name="class_ids[]" :classes="$classesList" :selected="$selectedClassIds" placeholder="Kies klassen" />
+                                                        <div class="text-xs text-gray-400 mt-2">Opmerking: Als je op <span class="font-medium text-gray-100">Activeer</span> klikt, wordt deze vraag <strong>direct</strong> actief voor de geselecteerde klassen en vervangt eventuele bestaande actieve vragen. Studenten kunnen daarna de vorige actieve vraag niet meer beantwoorden.</div>
                                                         <button
                                                             class="mt-3 px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-sm">Activeer</button>
                                                     </form>
@@ -239,9 +240,12 @@
                             $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect());
                             $selectedActivate = is_array(old('activate_class_ids')) ? old('activate_class_ids') : [];
                         @endphp
-                        <x-class-multiselect name="activate_class_ids[]" :classes="$classesList" :selected="$selectedActivate" placeholder="Selecteer klassen" />
+                        <x-class-multiselect name="activate_class_ids[]" :classes="$classesList" :selected="$selectedActivate"/>
+                        <div class="mt-2">
+                            <div class="text-xs text-gray-400">Opmerking: Als je op <span class="font-medium text-gray-100">Opslaan</span> klikt, wordt deze vraag <strong>direct</strong> actief voor de geselecteerde klassen en vervangt eventuele bestaande actieve vragen. Studenten kunnen daarna de vorige actieve vraag niet meer beantwoorden. <span class="font-medium text-gray-100">Wil je de vraag alvast aanmaken, en later pas aan zetten?</span> Dan kan je de klassenselectie leeglaten en dit later doen via <span class="font-medium text-gray-100">mijn vragen</span>. </div>
+                        </div>
                     </div>
-                    <button class="px-6 py-2 rounded bg-indigo-600 hover:bg-indigo-700">Opslaan</button>
+                    <button type="submit" class="px-6 py-2 rounded bg-indigo-600 hover:bg-indigo-700" onclick="if (document.querySelectorAll('input[name=\'activate_class_ids[]\']:checked').length && !confirm('Activeren maakt deze vraag direct actief voor de geselecteerde klassen en vervangt bestaande actieve vragen. Studenten kunnen daarna de vorige vraag niet meer beantwoorden. Weet je zeker dat je wilt doorgaan?')) return false;">Opslaan</button>
                 </form>
             </div>
 
@@ -249,7 +253,7 @@
             <!-- Classes and active question overview -->
             <div class="bg-gray-800/80 backdrop-blur rounded-lg p-6 border border-gray-700">
                 <h3 class="text-2xl font-semibold mt-4">Actieve vraag per klas:</h3>
-                <label class="block text-sm mb-2">Er kan maar een actieve vraag per klas zijn, de rode knop stopt de vraagstelling voor de klas. Leerlingen kunnen dan niet meer antwoorden.</label>
+                <label class="text-xs text-gray-400" >Er kan maar een actieve vraag per klas zijn, de rode knop stopt de vraagstelling voor de klas. Leerlingen kunnen dan niet meer antwoorden.</label>
                 @php $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()); @endphp
                 @if($classesList->isEmpty())
                     <p class="text-gray-400">Geen klassen gevonden.</p>

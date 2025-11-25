@@ -60,9 +60,6 @@
 							<li class="py-4 flex flex-col gap-3 hover:bg-gray-700/40 px-2 rounded transition">
 								<div class="flex items-center justify-between">
 									<div class="font-semibold">Klas: {{ $class->name }}</div>
-									@if($class->activeQuestion)
-										<span class="text-xs text-gray-400">Vraag #{{ $class->activeQuestion->id }}</span>
-									@endif
 								</div>
 								@if(!$class->activeQuestion)
 									<div class="text-gray-400 text-sm">Geen actieve vraag.</div>
