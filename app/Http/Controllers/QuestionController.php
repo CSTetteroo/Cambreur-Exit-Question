@@ -125,6 +125,13 @@ class QuestionController extends Controller
     {
         $this->authorizeQuestion($question);
         $classId = $request->query('class_id');
+        // Auto-select class if none provided: choose if exactly one class has this question active
+        if (!$classId) {
+            $activeClassIds = ClassModel::where('active_question_id', $question->id)->pluck('id');
+            if ($activeClassIds->count() === 1) {
+                $classId = $activeClassIds->first();
+            }
+        }
 
         // Base answers query for the question
         $answersQuery = \App\Models\Answer::with(['user', 'choice'])

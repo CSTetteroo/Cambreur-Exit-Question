@@ -251,10 +251,9 @@
                                         {{ optional($class->activeQuestion)->id ? Str::limit($class->activeQuestion->content, 60) : '—' }}
                                     </div>
                                 </div>
-                                <form method="POST" action="{{ route('docent.classes.clear', $class) }}">
+                                <form method="POST" action="{{ route('docent.classes.clear', $class) }}" onsubmit="return confirm('Dit verwijdert de actieve vraag uit deze klas. Studenten kunnen deze vraag daarna niet meer beantwoorden. Weet je zeker dat je wilt doorgaan?');">
                                     @csrf
-                                    <button class="px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 text-sm">Wis
-                                        actief</button>
+                                    <button type="submit" class="px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 text-sm">Wis actief</button>
                                 </form>
                             </li>
                         @endif

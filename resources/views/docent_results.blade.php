@@ -18,7 +18,7 @@
                     <input type="hidden" name="_" value="1">
                     <div>
                         <label class="block text-sm mb-1">Filter op klas</label>
-                        <select name="class_id" class="px-3 py-2 rounded bg-gray-700 border border-gray-600">
+                        <select name="class_id" class="px-3 py-2 rounded bg-gray-700 border border-gray-600" onchange="this.form.submit()">
                             <option value="">Alle klassen</option>
                             @php $classesList = $classes instanceof \Illuminate\Support\Collection ? $classes : (is_array($classes) ? collect($classes) : collect()); @endphp
                             @foreach($classesList as $class)
@@ -28,8 +28,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <button class="px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700">Toepassen</button>
-                    <a href="{{ route('docent.questions.index') }}" class="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600">Terug</a>
+                    <a href="{{ route('docent.questions.index') }}" class="px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700">Terug</a>
                 </form>
             </div>
 
