@@ -48,37 +48,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 // Logged-in user routes
 Route::middleware('auth')->group(function () {
     // General user dashboard (students & docenten). Admins are redirected to admin dashboard.
-    Route::get('/dashboard', function () {
-        $user = Auth::user();
-        if ($user && $user->role === 'admin') {
-            return redirect()->route('admin_dashboard');
-        }
-        // Ensure this exists for all roles to avoid compact() error in the view
-        $answeredIds = [];
-        $questions = collect();
-        $myClasses = collect();
-        // Students: show active question per class. Docenten: show latest own questions.
-        if ($user->role === 'student') {
-            $myClasses = \App\Models\ClassModel::with(['activeQuestion.creator','activeQuestion.choices'])
-                ->whereHas('students', function ($q) use ($user) { $q->where('users.id', $user->id); })
-                ->orderBy('name')
-                ->get();
-            $questionIds = $myClasses->pluck('active_question_id')->filter()->unique()->values();
-            if ($questionIds->isNotEmpty()) {
-                $answeredIds = \App\Models\Answer::where('user_id', $user->id)
-                    ->whereIn('question_id', $questionIds)
-                    ->pluck('question_id')->toArray();
-            }
-        } else {
-            // docent: own latest questions
-            $questions = Question::with('creator')
-                ->where('created_by', $user->id)
-                ->latest()->take(50)->get();
-        }
-        // Also pass all classes for admin/docent dashboard cards to avoid querying in the view
-        $allClasses = \App\Models\ClassModel::orderBy('name')->get();
-        return view('user_dashboard', compact('user', 'questions', 'answeredIds', 'myClasses', 'allClasses'));
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     // Docent-only question management
     Route::middleware(['verified','docent'])->prefix('docent')->name('docent.')->group(function(){
