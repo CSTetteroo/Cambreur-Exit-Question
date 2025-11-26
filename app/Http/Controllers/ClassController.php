@@ -8,6 +8,7 @@ use App\Models\Answer;
 use App\Models\Question;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ClassController extends Controller
 {
@@ -41,12 +42,25 @@ class ClassController extends Controller
             $questionIds = Question::pluck('id')->toArray();
         }
 
-        // Get answer counts grouped by user and correctness
+        // Optional reset timestamp (per docent & class)
+        $resetAt = null;
+        if ($user->role === 'docent') {
+            $resetAt = DB::table('class_grade_resets')
+                ->where('class_id', $class->id)
+                ->where('docent_id', $user->id)
+                ->value('reset_at');
+        }
+
+        // Get answer counts grouped by user and correctness (respect reset timestamp for docent)
         $studentIds = $students->pluck('id')->toArray();
         $counts = [];
         if (!empty($questionIds) && !empty($studentIds)) {
-            $rows = Answer::whereIn('user_id', $studentIds)
-                ->whereIn('question_id', $questionIds)
+            $rowsQuery = Answer::whereIn('user_id', $studentIds)
+                ->whereIn('question_id', $questionIds);
+            if ($resetAt) {
+                $rowsQuery->where('created_at', '>', $resetAt);
+            }
+            $rows = $rowsQuery
                 ->selectRaw('user_id, is_correct, count(*) as cnt')
                 ->groupBy('user_id', 'is_correct')
                 ->get();
@@ -64,6 +78,7 @@ class ClassController extends Controller
             'students' => $students,
             'counts' => $counts,
             'forDocent' => ($user->role === 'docent'),
+            'resetAt' => $resetAt,
         ]);
     }
 
@@ -85,9 +100,19 @@ class ClassController extends Controller
             $questionIds = Question::pluck('id')->toArray();
         }
 
+        // Apply optional reset timestamp for this docent & class
+        $resetAt = null;
+        if ($current->role === 'docent') {
+            $resetAt = \Illuminate\Support\Facades\DB::table('class_grade_resets')
+                ->where('class_id', $class->id)
+                ->where('docent_id', $current->id)
+                ->value('reset_at');
+        }
+
         $answers = Answer::with('question', 'choice')
             ->where('user_id', $user->id)
             ->when(!empty($questionIds), fn($q) => $q->whereIn('question_id', $questionIds))
+            ->when($resetAt, fn($q) => $q->where('created_at', '>', $resetAt))
             ->latest()->get();
 
         $correct = $answers->where('is_correct', 1)->count();
@@ -101,5 +126,19 @@ class ClassController extends Controller
             'wrong' => $wrong,
             'forDocent' => ($current->role === 'docent'),
         ]);
+    }
+
+    // Docent-only: set a reset timestamp. Counts after this ignore earlier answers.
+    public function resetGrades(ClassModel $class)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== 'docent') {
+            abort(403);
+        }
+        DB::table('class_grade_resets')->updateOrInsert(
+            ['class_id' => $class->id, 'docent_id' => $user->id],
+            ['reset_at' => now()]
+        );
+        return redirect()->back()->with('status', 'Tellingen opnieuw gestart voor jouw vragen in deze klas.');
     }
 }

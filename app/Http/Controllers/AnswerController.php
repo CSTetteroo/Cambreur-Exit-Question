@@ -55,6 +55,8 @@ class AnswerController extends Controller
             }
             $answer->choice_id = $choice->id;
             $answer->answer_text = null;
+            // Set correctness immediately based on the current correct choice
+            $answer->is_correct = (bool) $choice->is_correct;
         } else {
             // Open question requires text
             $text = trim($validated['answer_text'] ?? '');

@@ -6,8 +6,23 @@
     <div class="py-8 bg-gray-900 min-h-screen text-gray-100">
         <div class="max-w-5xl mx-auto px-4 space-y-6">
             <div class="bg-gray-800/80 rounded-lg p-6 border border-gray-700">
-                <h3 class="text-lg font-semibold mb-2">Studenten in {{ $class->name }}</h3>
-                <p class="text-sm text-gray-400 mb-4">Tonen van resultaten voor {{ $forDocent ? 'jouw vragen' : 'alle vragen (admin)' }}.</p>
+                <div class="flex items-start justify-between gap-4 mb-2">
+                    <div>
+                        <h3 class="text-lg font-semibold">Studenten in {{ $class->name }}</h3>
+                        <p class="text-sm text-gray-400 mt-1">Resultaten voor {{ $forDocent ? 'jouw vragen' : 'alle vragen (admin)' }}.</p>
+                    </div>
+                    @if($forDocent)
+                        <form method="POST" action="{{ route('classes.reset_grades', $class) }}" onsubmit="return confirm('Dit zet alle juist/fout waardes voor deze klas terug (behoudt antwoorden). Weet je zeker dat je wilt doorgaan?');" class="shrink-0">
+                            @csrf
+                            <button type="submit" class="px-3 py-1.5 rounded bg-yellow-600 hover:bg-yellow-700 text-xs font-medium">Reset tellingen</button>
+                        </form>
+                    @endif
+                </div>
+                @if($forDocent)
+                    <div class="text-xs text-gray-500 mb-4">Gebruik <span class="text-gray-300 font-medium">Reset tellingen</span> na het toekennen van extra punten om een nieuwe beoordelingsronde te starten. Antwoorden vóór het laatst reset-moment worden genegeerd in deze teller (antwoorden blijven wel bewaard).</div>
+                @else
+                    <div class="text-xs text-gray-500 mb-4">Admin overzicht toont alle historische antwoorden; resetten is alleen beschikbaar voor docenten.</div>
+                @endif
                 @if($students->isEmpty())
                     <p class="text-gray-400">Geen studenten in deze klas.</p>
                 @else

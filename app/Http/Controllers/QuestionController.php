@@ -117,6 +117,17 @@ class QuestionController extends Controller
         Choice::where('question_id', $question->id)->update(['is_correct' => false]);
         $choice->is_correct = true;
         $choice->save();
+
+        // Regrade existing answers for this question so all views update instantly
+        \App\Models\Answer::where('question_id', $question->id)
+            ->whereNotNull('choice_id')
+            ->where('choice_id', $choice->id)
+            ->update(['is_correct' => true]);
+
+        \App\Models\Answer::where('question_id', $question->id)
+            ->whereNotNull('choice_id')
+            ->where('choice_id', '!=', $choice->id)
+            ->update(['is_correct' => false]);
         return back()->with('status', 'Juiste antwoord opgeslagen');
     }
 

@@ -96,6 +96,7 @@ Route::middleware('auth')->group(function () {
     // Class detail routes (accessible to admin and docent, controller enforces role)
     Route::get('/classes/{class}', [\App\Http\Controllers\ClassController::class, 'show'])->name('classes.show');
     Route::get('/classes/{class}/students/{user}', [\App\Http\Controllers\ClassController::class, 'studentShow'])->name('classes.student.show');
+    Route::post('/classes/{class}/reset-grades', [\App\Http\Controllers\ClassController::class, 'resetGrades'])->name('classes.reset_grades');
 
     // Answers (students)
     Route::post('/answers', [\App\Http\Controllers\AnswerController::class, 'store'])->name('answers.store');
