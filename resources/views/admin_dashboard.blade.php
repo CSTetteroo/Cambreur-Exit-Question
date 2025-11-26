@@ -53,7 +53,6 @@
                 <input type="text" name="name" placeholder="Naam docent" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring focus:ring-indigo-600/40" required>
                 <input type="email" name="email" placeholder="E-mail docent" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring focus:ring-indigo-600/40" required>
                 <input type="password" name="password" placeholder="Wachtwoord" class="w-full px-4 py-2 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring focus:ring-indigo-600/40" required>
-                <x-class-multiselect name="class_id[]" :classes="$classes" :selected="(array) old('class_id', [])" placeholder="Koppelen aan klassen" />
                 <button type="submit" class="px-6 py-2 rounded bg-indigo-600 hover:bg-indigo-700 transition text-sm font-medium">Toevoegen</button>
             </form>
         </div>
