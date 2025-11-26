@@ -41,7 +41,30 @@
                                 @foreach($answers as $ans)
                                     <tr class="hover:bg-gray-700/30">
                                         <td class="px-4 py-2">{{ Str::limit(optional($ans->question)->content, 120) }}</td>
-                                        <td class="px-4 py-2">@if(optional($ans->choice)) {{ optional($ans->choice)->label }}. {{ optional($ans->choice)->text }} @else {{ $ans->answer_text }} @endif</td>
+                                        <td class="px-4 py-2">
+                                            @php
+                                                $hasChoice = (bool) optional($ans->choice)->id;
+                                                $hasText = filled($ans->answer_text);
+                                            @endphp
+                                            @if($hasChoice || $hasText)
+                                                <div class="space-y-1">
+                                                    @if($hasChoice)
+                                                        <div>
+                                                            <span class="font-medium">{{ optional($ans->choice)->label }}.</span>
+                                                            {{ optional($ans->choice)->text }}
+                                                        </div>
+                                                    @endif
+                                                    @if($hasText)
+                                                        <div>
+                                                            <span class="text-gray-400"></span>
+                                                            {{ $ans->answer_text }}
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @else
+                                                <span class="text-gray-400">–</span>
+                                            @endif
+                                        </td>
                                         <td class="px-4 py-2">@if($ans->is_correct === 1) <span class="text-emerald-400">✓</span> @elseif($ans->is_correct === 0) <span class="text-red-400">✗</span> @else <span class="text-gray-400">–</span> @endif</td>
                                         <td class="px-4 py-2 text-xs text-gray-400">{{ $ans->created_at->diffForHumans() }}</td>
                                     </tr>
