@@ -12,6 +12,10 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        // Dit bepaalt wat de home-dashboard laat zien.
+        // Admins gaan naar het admin-dashboard,
+        // studenten zien actieve vragen voor hun klassen,
+        // docenten zien hun nieuwste vragen.
         $user = Auth::user();
         if ($user && $user->role === 'admin') {
             return redirect()->route('admin_dashboard');
@@ -22,7 +26,7 @@ class DashboardController extends Controller
         $questions = collect();
         $myClasses = collect();
 
-        // Students: show active question per class. Docenten: show latest own questions.
+        // Studenten: toon actieve vraag per klas. Docenten: toon nieuwste eigen vragen.
         if ($user->role === 'student') {
             $myClasses = ClassModel::with(['activeQuestion.creator', 'activeQuestion.choices'])
                 ->whereHas('students', function ($q) use ($user) {
@@ -47,7 +51,7 @@ class DashboardController extends Controller
                 ->get();
         }
 
-        // Also pass all classes for admin/docent dashboard cards to avoid querying in the view
+        // Geef ook alle klassen mee voor admin/docent-kaarten, scheelt queries in de view.
         $allClasses = ClassModel::orderBy('name')->get();
 
         return view('user_dashboard', compact('user', 'questions', 'answeredIds', 'myClasses', 'allClasses'));

@@ -12,6 +12,10 @@ class AnswerController extends Controller
 {
     public function store(Request $request)
     {
+        // Dit slaat het antwoord van een student op.
+        // Eerst checken we of de invoer klopt,
+        // daarna of de vraag echt actief is voor z’n klas(sen),
+        // en dan slaan we het antwoord op. Je krijgt maar één poging.
         $user = Auth::user();
         // Validate basic input
         $validated = $request->validate([
@@ -22,7 +26,8 @@ class AnswerController extends Controller
 
         $question = Question::with('choices')->findOrFail($validated['question_id']);
 
-        // Ensure question is active in at least one of the student's classes
+        // Zeker weten dat de vraag actief is in minstens één klas van de student.
+        // Oftewel: als jouw klas deze vraag niet actief heeft, kun je niet antwoorden.
         $activeQuestionIds = \App\Models\ClassModel::whereNotNull('active_question_id')
             ->whereHas('students', function ($q) use ($user) {
                 $q->where('users.id', $user->id);
@@ -33,7 +38,8 @@ class AnswerController extends Controller
             abort(403, 'Deze vraag is niet actief voor jouw klas(sen).');
         }
 
-        // Enforce one answer per student per question (no edits)
+        // Eén antwoord per student per vraag (geen edits).
+        // Dus: al geantwoord? Dan sturen we je terug.
         $exists = Answer::where('question_id', $question->id)->where('user_id', $user->id)->exists();
         if ($exists) {
             return back()->withErrors(['already_answered' => 'Je hebt deze vraag beantwoord!.'])->withInput();
@@ -44,7 +50,8 @@ class AnswerController extends Controller
         ]);
 
         if ($question->type === 'multiple_choice') {
-            // Must select a valid choice belonging to this question
+            // Je moet een geldige optie kiezen die bij deze vraag hoort.
+            // Multiple choice = kies één van de gegeven opties.
             $choiceId = $validated['choice_id'] ?? null;
             if (!$choiceId) {
                 return back()->withErrors(['choice_id' => 'Kies een optie'])->withInput();
@@ -55,10 +62,12 @@ class AnswerController extends Controller
             }
             $answer->choice_id = $choice->id;
             $answer->answer_text = null;
-            // Set correctness immediately based on the current correct choice
+            // Direct bepalen of het goed is op basis van de juiste optie.
+            // Als de gekozen optie juist is, heb je ‘m meteen goed.
             $answer->is_correct = (bool) $choice->is_correct;
         } else {
-            // Open question requires text
+            // Open vraag heeft tekst nodig.
+            // Dus: typ iets, en niet leeg.
             $text = trim($validated['answer_text'] ?? '');
             if ($text === '') {
                 return back()->withErrors(['answer_text' => 'Antwoord is verplicht'])->withInput();
@@ -67,6 +76,7 @@ class AnswerController extends Controller
             $answer->choice_id = null;
         }
 
+        // Klaar: opslaan en een berichtje terug.
         $answer->save();
         return back()->with('status', 'Antwoord opgeslagen');
     }

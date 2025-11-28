@@ -12,10 +12,11 @@ use Illuminate\View\View;
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * dit heb ik echt last-minute eruit gehaald van breeze omdat ik het irritant vond dat iedereen z'n profiel kon aanpassen dus dit doet eigenlijk niets.
      */
     public function edit(Request $request): View
     {
+        // Laat de profielpagina zien met de gegevens van de huidige gebruiker.
         return view('profile.edit', [
             'user' => $request->user(),
         ]);
@@ -26,6 +27,8 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
+        // Sla wijzigingen in je profiel op.
+        // Als je je e-mail aanpast, halen we de verificatie weg zodat je opnieuw moet verifiëren.
         $request->user()->fill($request->validated());
 
         if ($request->user()->isDirty('email')) {
@@ -42,6 +45,8 @@ class ProfileController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        // Verwijder je account (na wachtwoordcheck),
+        // log je uit en ga terug naar de homepage.
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
         ]);

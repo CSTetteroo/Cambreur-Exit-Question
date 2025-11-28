@@ -12,7 +12,8 @@ class UserController extends Controller
 
     public function admin_index()
     {
-        // Eager load classes to avoid N+1 in grouping by class in the admin view
+        // Admin-overzicht: alle gebruikers en hun klassen.
+        // Laad klassen eager om N+1 queries te voorkomen in de admin-view
         $users = User::with('classes')->get();
         return view('admin_dashboard', [
             'users' => $users,
@@ -23,6 +24,9 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        // Nieuwe gebruiker aanmaken.
+        // Studenten loggen in met een numerieke ID (we bewaren die in het e-mailveld),
+        // anderen gebruiken een normale e-mail. Standaard wachtwoord is 'Welkom123!' als er niks is opgegeven.
 
         $rules = [
             'name' => 'required|string|max:255',
@@ -31,7 +35,7 @@ class UserController extends Controller
             'class_id' => 'nullable|array',
             'class_id.*' => 'exists:classes,id',
         ];
-        // Distinguish identifier: students use numeric login id, others use email
+        // Verschil in identifier: studenten gebruiken numeriek login-id, anderen e-mail
         if ($request->role === 'student') {
             $rules['login_id'] = 'required|string|regex:/^[0-9]{4,20}$/|unique:users,email';
             $rules['class_id'] = 'required|array|min:1';
@@ -50,6 +54,7 @@ class UserController extends Controller
         $user->save();
 
         // Attach to classes if student or docent, avoid duplicates
+        // Als ze bij klassen horen (student/docent), koppelen we ze meteen.
         if (in_array($user->role, ['student', 'docent']) && $request->filled('class_id')) {
             $user->classes()->sync($request->class_id);
         }
@@ -59,6 +64,7 @@ class UserController extends Controller
 
     public function edit($id)
     {
+        // Toon het bewerkformulier voor één gebruiker, plus alle klassen om uit te kiezen.
         $user = User::findOrFail($id);
         return view('edit_user', [
             'user' => $user,
@@ -68,9 +74,11 @@ class UserController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Gebruiker bijwerken, inclusief klas-koppelingen.
+        // Als je een nieuw wachtwoord zet, dan hoeft het niet bij de volgende login gewijzigd te worden.
         $user = User::findOrFail($id);
 
-        // Build validation rules
+        // Bouw validatieregels
         $rules = [
             'name' => 'required|string|max:255',
             'role' => 'required|in:admin,docent,student',
@@ -95,11 +103,12 @@ class UserController extends Controller
         }
         $user->save();
 
-        // Sync class connections
+        // Synchroniseer klas-koppelingen
+        // Studenten/docenten houden geselecteerde klassen; admins horen geen klassen te hebben.
         if (in_array($user->role, ['student', 'docent'])) {
             $user->classes()->sync($request->class_id ?? []); // empty array detaches all if none selected
         } else {
-            // Admin should not have class links
+            // Admins mogen geen klas-koppelingen hebben
             $user->classes()->detach();
         }
 
@@ -108,6 +117,7 @@ class UserController extends Controller
 
     public function destroy($id)
     {
+        // Verwijder een gebruiker. Klaar.
         $user = User::findOrFail($id);
         $user->delete();
         return redirect()->back();
@@ -115,13 +125,15 @@ class UserController extends Controller
 
     public function resetPassword($id)
     {
+        // Admins en docenten kunnen wachtwoorden resetten.
+        // Docenten mogen alleen student-wachtwoorden resetten; admins mogen bij iedereen.
         $current = auth()->user();
         if (!$current || !in_array($current->role, ['admin','docent'])) {
             abort(403);
         }
         $user = User::findOrFail($id);
         if ($user->role !== 'student' && $current->role !== 'admin') {
-            // Only admins may reset non-student passwords
+            // Alleen admins mogen niet-student wachtwoorden resetten
             abort(403);
         }
         $user->password = Hash::make('Welkom123!');
