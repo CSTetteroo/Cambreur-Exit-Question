@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Answer;
 use App\Models\Choice;
 use App\Models\Question;
+use App\Models\User;
+use App\Models\ClassModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -28,7 +30,7 @@ class AnswerController extends Controller
 
         // Zeker weten dat de vraag actief is in minstens één klas van de student.
         // Oftewel: als jouw klas deze vraag niet actief heeft, kun je niet antwoorden.
-        $activeQuestionIds = \App\Models\ClassModel::whereNotNull('active_question_id')
+        $activeQuestionIds = ClassModel::whereNotNull('active_question_id')
             ->whereHas('students', function ($q) use ($user) {
                 $q->where('users.id', $user->id);
             })

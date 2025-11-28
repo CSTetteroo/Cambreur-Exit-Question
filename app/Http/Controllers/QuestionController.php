@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Choice;
 use App\Models\ClassModel;
 use App\Models\Question;
+use App\Models\Answer;
+use App\Models\User;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -133,12 +136,12 @@ class QuestionController extends Controller
         $choice->save();
 
         // Herwaardeer bestaande antwoorden zodat de weergave meteen klopt
-        \App\Models\Answer::where('question_id', $question->id)
+        Answer::where('question_id', $question->id)
             ->whereNotNull('choice_id')
             ->where('choice_id', $choice->id)
             ->update(['is_correct' => true]);
 
-        \App\Models\Answer::where('question_id', $question->id)
+        Answer::where('question_id', $question->id)
             ->whereNotNull('choice_id')
             ->where('choice_id', '!=', $choice->id)
             ->update(['is_correct' => false]);
@@ -160,7 +163,7 @@ class QuestionController extends Controller
 
         // Base answers query for the question
         // Basis query voor antwoorden van deze vraag
-        $answersQuery = \App\Models\Answer::with(['user', 'choice'])
+        $answersQuery = Answer::with(['user', 'choice'])
             ->where('question_id', $question->id);
 
         if ($classId) {
@@ -177,7 +180,7 @@ class QuestionController extends Controller
         // Bouw rijen per student: bij klasfilter toon alle studenten uit die klas; anders alle studenten
         $students = $classId
             ? optional(ClassModel::with('students')->find($classId))->students ?? collect()
-            : \App\Models\User::where('role', 'student')->orderBy('name')->get();
+            : User::where('role', 'student')->orderBy('name')->get();
 
         $answersByUser = $answers->keyBy('user_id');
         $rows = $students->map(function ($stu) use ($answersByUser, $question) {

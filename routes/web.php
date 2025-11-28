@@ -21,6 +21,9 @@ Route::get('/', function () {
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ClassController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\AnswerController;
 // Controllers referenced with FQCN below
 use App\Models\Question;
 use Illuminate\Support\Facades\Auth;
@@ -48,28 +51,28 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 // Logged-in user routes
 Route::middleware('auth')->group(function () {
     // General user dashboard (students & docenten). Admins are redirected to admin dashboard.
-    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Docent-only question management
     Route::middleware(['verified','docent'])->prefix('docent')->name('docent.')->group(function(){
-        Route::get('/questions', [\App\Http\Controllers\QuestionController::class, 'index'])->name('questions.index');
-        Route::post('/questions', [\App\Http\Controllers\QuestionController::class, 'store'])->name('questions.store');
-        Route::post('/questions/{question}/activate', [\App\Http\Controllers\QuestionController::class, 'activate'])->name('questions.activate');
-        Route::post('/questions/{question}/time-is-up', [\App\Http\Controllers\QuestionController::class, 'timeIsUp'])->name('questions.time_is_up');
-        Route::post('/classes/{class}/clear', [\App\Http\Controllers\QuestionController::class, 'clearActive'])->name('classes.clear');
-        Route::get('/questions/{question}/results', [\App\Http\Controllers\QuestionController::class, 'results'])->name('questions.results');
-        Route::post('/questions/{question}/correct', [\App\Http\Controllers\QuestionController::class, 'setCorrect'])->name('questions.setCorrect');
-        Route::post('/questions/{question}/grade', [\App\Http\Controllers\QuestionController::class, 'gradeOpen'])->name('questions.grade');
-        Route::delete('/questions/{question}', [\App\Http\Controllers\QuestionController::class, 'destroy'])->name('questions.destroy');
+        Route::get('/questions', [QuestionController::class, 'index'])->name('questions.index');
+        Route::post('/questions', [QuestionController::class, 'store'])->name('questions.store');
+        Route::post('/questions/{question}/activate', [QuestionController::class, 'activate'])->name('questions.activate');
+        Route::post('/questions/{question}/time-is-up', [QuestionController::class, 'timeIsUp'])->name('questions.time_is_up');
+        Route::post('/classes/{class}/clear', [QuestionController::class, 'clearActive'])->name('classes.clear');
+        Route::get('/questions/{question}/results', [QuestionController::class, 'results'])->name('questions.results');
+        Route::post('/questions/{question}/correct', [QuestionController::class, 'setCorrect'])->name('questions.setCorrect');
+        Route::post('/questions/{question}/grade', [QuestionController::class, 'gradeOpen'])->name('questions.grade');
+        Route::delete('/questions/{question}', [QuestionController::class, 'destroy'])->name('questions.destroy');
     });
 
     // Class detail routes (accessible to admin and docent, controller enforces role)
-    Route::get('/classes/{class}', [\App\Http\Controllers\ClassController::class, 'show'])->name('classes.show');
-    Route::get('/classes/{class}/students/{user}', [\App\Http\Controllers\ClassController::class, 'studentShow'])->name('classes.student.show');
-    Route::post('/classes/{class}/reset-grades', [\App\Http\Controllers\ClassController::class, 'resetGrades'])->name('classes.reset_grades');
+    Route::get('/classes/{class}', [ClassController::class, 'show'])->name('classes.show');
+    Route::get('/classes/{class}/students/{user}', [ClassController::class, 'studentShow'])->name('classes.student.show');
+    Route::post('/classes/{class}/reset-grades', [ClassController::class, 'resetGrades'])->name('classes.reset_grades');
 
     // Answers (students)
-    Route::post('/answers', [\App\Http\Controllers\AnswerController::class, 'store'])->name('answers.store');
+    Route::post('/answers', [AnswerController::class, 'store'])->name('answers.store');
 
     // First-time password change
     Route::get('/first-password', [\App\Http\Controllers\Auth\FirstPasswordController::class, 'show'])->name('password.first.show');
