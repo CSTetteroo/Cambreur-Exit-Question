@@ -44,7 +44,15 @@
                                         <td class="px-4 py-2 font-medium text-emerald-400">{{ $c['correct'] ?? 0 }}</td>
                                         <td class="px-4 py-2 font-medium text-red-400">{{ $c['wrong'] ?? 0 }}</td>
                                         <td class="px-4 py-2">
-                                            <a href="{{ route('classes.student.show', ['class' => $class->id, 'user' => $stu->id]) }}" class="text-indigo-300 hover:text-indigo-200 text-sm">Bekijk details</a>
+                                            <div class="flex items-center gap-3">
+                                                <a href="{{ route('classes.student.show', ['class' => $class->id, 'user' => $stu->id]) }}" class="text-indigo-300 hover:text-indigo-200 text-sm">Bekijk details</a>
+                                                @if($forDocent)
+                                                    <form method="POST" action="{{ route('users.reset_password', $stu->id) }}" onsubmit="return confirm('Wachtwoord van deze student resetten naar standaard?');">
+                                                        @csrf
+                                                        <button type="submit" class="text-yellow-300 hover:text-yellow-200 text-sm">Reset wachtwoord</button>
+                                                    </form>
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach

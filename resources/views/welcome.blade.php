@@ -26,6 +26,5 @@
             @endauth
         </div>
     </div>
-
 </body>
 </html>
